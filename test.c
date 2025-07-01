@@ -225,7 +225,7 @@ TestResult *queue_push_pop(TestResult *result) {
 	sprintf(result->message, "[queue_push_pop]");
 
 	Allocator *raw_heap = get_raw_heap_allocator();
-	Result queue_res = new_queue_collection(raw_heap, sizeof(int), 2 );
+	Result queue_res = new_queue_collection(raw_heap, sizeof(int), 4 );
 	QueueCollection queue = *((QueueCollection*)queue_res.data.data);
 
 	int int1 = 1;
@@ -248,15 +248,15 @@ TestResult *queue_push_pop(TestResult *result) {
 	}
 
 	queue_res = LINEAR_POP(&queue);
-	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int2_s) != 0) {
-		sprintf(result->message + strlen(result->message), " Unable to pop value 2");
+	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int1_s) != 0) {
+		sprintf(result->message + strlen(result->message), " Unable to pop value 1");
 		deinit_queue_collection(&queue);
 		return result;
 	}
 
 	queue_res = LINEAR_POP(&queue);
-	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int1_s) != 0) {
-		sprintf(result->message + strlen(result->message), " Unable to pop value 1");
+	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int2_s) != 0) {
+		sprintf(result->message + strlen(result->message), " Unable to pop value 2");
 		deinit_queue_collection(&queue);
 		return result;
 	}

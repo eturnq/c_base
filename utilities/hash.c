@@ -1,7 +1,7 @@
 #include "../utilities.h"
 
 uint8_t hash8_slice(Slice text) {
-	uint8_t hash;
+	uint8_t hash = 0;
 
 	for (unsigned int index = 0; index < text.length; index++) {
 		hash += ((uint8_t*)text.data)[index];

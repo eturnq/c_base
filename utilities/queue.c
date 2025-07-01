@@ -1,6 +1,7 @@
 #include "queue.h"
 #include "../memory.h"
 
+#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -66,6 +67,7 @@ Result queue_pop(Linear *linear) {
 	res.status = ERROR_OK;
 	res.data.length = queue->item_size;
 	res.data.data = (uint8_t*)queue->buffer.data + (queue->head * queue->item_size);
+	queue->head++;
 
 	return res;
 }

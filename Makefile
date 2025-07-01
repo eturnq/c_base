@@ -6,7 +6,7 @@ LDFLAGS=-L. -l:$(LIB)
 $(LIB): $(OBJS)
 	$(AR) rcs $(LIB) $(OBJS)
 
-test: test.c $(LIBS)
+test: test.c $(LIB)
 	$(CC) -o test test.c $(LDFLAGS)
 	./test
 
