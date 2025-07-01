@@ -2,6 +2,7 @@
 #include <string.h>
 
 #include "memory.h"
+#include "utilities.h"
 #include "utilities/queue.h"
 #include "utilities/stack.h"
 
@@ -98,7 +99,7 @@ TestResult *heap_reallocation(TestResult *result) {
 		return result;
 	}
 
-	FREE(raw_heap, alloc_res.data);
+	//FREE(raw_heap, alloc_res.data);
 	FREE(raw_heap, realloc_res.data);
 	result->status = TEST_PASS;
 
