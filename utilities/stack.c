@@ -4,7 +4,7 @@
 #include <stdint.h>
 #include <string.h>
 
-static Result stack_push(Collection *collection, Slice item) {
+static Result stack_push(Linear *collection, Slice item) {
 	Result res;
 	BASE_ERROR_RESULT(res);
 
@@ -35,7 +35,7 @@ static Result stack_push(Collection *collection, Slice item) {
 	return res;
 }
 
-static Result stack_pop(Collection *collection) {
+static Result stack_pop(Linear *collection) {
 	Result res;
 	BASE_ERROR_RESULT(res);
 
@@ -82,5 +82,25 @@ Result new_stack_collection(Allocator* allocator, unsigned int item_size, unsign
 	res.data.data = &stack;
 	res.status = ERROR_OK;
 
+	return res;
+}
+
+Result deinit_stack_collection(StackCollection *stack) {
+	Result res;
+	BASE_ERROR_RESULT(res);
+
+	if (stack == 0) {
+		return res;
+	}
+
+	Result dealloc_res = FREE(stack->allocator, stack->buffer);
+	if (dealloc_res.status != ERROR_OK) {
+		return res;
+	}
+
+	stack->item_size = 0;
+	stack->item_count = 0;
+
+	res.status = ERROR_OK;
 	return res;
 }

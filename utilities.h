@@ -28,6 +28,8 @@ struct result_s {
 	Slice data;
 };
 
+int slice_cmp(Slice, Slice);
+
 #define BASE_ERROR_RESULT(result) \
 	result.status = ERROR_ERR; \
 	result.data.length = 0; \
@@ -42,21 +44,26 @@ struct map_s {
 
 typedef struct hashmap8_s Hashmap8;
 
-#define MAP_ADD(map, key, value) (((Map*)map)->add(map, key, value))
-#define MAP_GET(map, key) (((Map*)map)->get(map, key))
-#define MAP_REMOVE(map, key) (((Map*)map)->remove(map, key))
+#define MAP_ADD(map, key, value) (((Map*)map)->add((Map*)map, key, value))
+#define MAP_GET(map, key) (((Map*)map)->get((Map*)map, key))
+#define MAP_REMOVE(map, key) (((Map*)map)->remove((Map*)map, key))
 
 
-typedef struct collection_s Collection;
-struct collection_s {
-	Result (*push)(Collection*, Slice);
-	Result (*pop)(Collection*);
+typedef struct linear_s Linear;
+struct linear_s {
+	Result (*push)(Linear*, Slice);
+	Result (*pop)(Linear*);
 };
 
-#define COLLECTION_PUSH(collection, item) (((Collection*)collection)->push(collection, item))
-#define COLLECTION_POP(collection) (((Collection*)collection)->pop(collection))
+#define LINEAR_PUSH(collection, item) (((Linear*)collection)->push((Linear*)collection, item))
+#define LINEAR_POP(collection) (((Linear*)collection)->pop((Linear*)collection))
 
 typedef struct stack_collection_s StackCollection;
 Result new_stack_collection(Allocator*, unsigned int, unsigned int);
+Result deinit_stack_collection(StackCollection *stack);
+
+typedef struct queue_collection_s QueueCollection;
+Result new_queue_collection(Allocator*, unsigned int, unsigned int);
+Result deinit_queue_collection(QueueCollection*);
 
 #endif
