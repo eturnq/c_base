@@ -11,7 +11,7 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 16
+#define TEST_COUNT 19
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -25,10 +25,13 @@ Test tests[TEST_COUNT] = {
 	queue_init_deinit,
 	queue_push_pop,
 	array_list_init_deinit,
-	array_list_push_pop,
+	array_list_push,
+	array_list_pop,
 	array_list_get,
 	array_list_index_of,
-	array_list_remove
+	array_list_remove,
+	array_list_insert,
+	array_list_swap
 };
 
 int main() {

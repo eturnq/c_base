@@ -1,5 +1,6 @@
 #include "arraylist_test.h"
 #include "../utilities.h"
+#include <stdio.h>
 
 TestResult *array_list_init_deinit(TestResult *result) {
     INIT_RESULT(result, "[array_list_init_deinit]");
@@ -23,7 +24,70 @@ TestResult *array_list_init_deinit(TestResult *result) {
     return result;
 }
 
-TestResult *array_list_push_pop(TestResult *result) {
+TestResult *array_list_push(TestResult *result) {
+    INIT_RESULT(result, "[array_list_push]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+
+    int int1 = 1;
+    int int2 = 2;
+    int int3 = 3;
+    Slice s = { sizeof(int), &int1 };
+
+    if (LINEAR_PUSH(&al, s).status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to push value 1");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (al.item_count != 1) {
+        MSG_PRINT(result, " Incorrect item_count after 1 push");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (slice_cmp(s, slice_sub(al.buffer, 0, al.item_size)) != 0) {
+        MSG_PRINT(result, " Incorrect value of index 0 after 1 push");
+        deinit_array_list(&al);
+    }
+
+    s.data = &int2;
+    if (LINEAR_PUSH(&al, s).status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to push value 2");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (al.item_count != 2) {
+        MSG_PRINT(result, " Incorrect item_count after 2 pushes");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (slice_cmp(s, slice_sub(al.buffer, al.item_size, al.item_size)) != 0) {
+        MSG_PRINT(result, " Incorrect value of index 0 after 2 pushes");
+        deinit_array_list(&al);
+    }
+
+    s.data = &int3;
+    if (LINEAR_PUSH(&al, s).status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to push value 3");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (al.item_count != 3) {
+        MSG_PRINT(result, " Incorrect item_count after 3 pushes");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (slice_cmp(s, slice_sub(al.buffer, al.item_size << 1, al.item_size)) != 0) {
+        MSG_PRINT(result, " Incorrect value of index 0 after 3 pushes");
+        deinit_array_list(&al);
+    }
+
+    deinit_array_list(&al);
+    result->status = TEST_PASS;
+    return result;
+}
+
+TestResult *array_list_pop(TestResult *result) {
     INIT_RESULT(result, "[array_list_push_pop]");
 
     Allocator *heap = get_raw_heap_allocator();
@@ -35,18 +99,7 @@ TestResult *array_list_push_pop(TestResult *result) {
     Slice s2 = { sizeof(int), &int2 };
 
     res = LINEAR_PUSH(&al, s1);
-    if (res.status != ERROR_OK) {
-        MSG_PRINT(result, " Unable to push first value");
-        deinit_array_list(&al);
-        return result;
-    }
-
     res = LINEAR_PUSH(&al, s2);
-    if (res.status != ERROR_OK) {
-        MSG_PRINT(result, " Unable to push second value");
-        deinit_array_list(&al);
-        return result;
-    }
 
     res = LINEAR_POP(&al);
     if (res.status != ERROR_OK) {
@@ -215,6 +268,111 @@ TestResult *array_list_remove(TestResult *result) {
 
     if (al.item_count != 0) {
         MSG_PRINT(result, " item count should be zero after item removed");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    deinit_array_list(&al);
+    result->status = TEST_PASS;
+    return result;
+}
+
+TestResult *array_list_insert(TestResult *result) {
+    INIT_RESULT(result, "[array_list_insert]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    int int1 = 1;
+    int int2 = 2;
+    int int3 = 3;
+    Slice s = { sizeof(int), &int1 };
+    LINEAR_PUSH(&al, s);
+    s.data = &int2;
+    LINEAR_PUSH(&al, s);
+    s.data = &int3;
+
+    Result res = INDEXING_INSERT(&al, s, 1);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to insert value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (al.item_count != 3) {
+        MSG_PRINT(result, " Incorrect item_count after insert");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 0), int) != int1) {
+        MSG_PRINT(result, " Index 0 has the wrong value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 1), int) != int3) {
+        MSG_PRINT(result, " Index 1 has the wrong value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 2), int) != int2) {
+        MSG_PRINT(result, " Index 2 has the wrong value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    deinit_array_list(&al);
+    result->status = TEST_PASS;
+
+    return result;
+}
+
+TestResult *array_list_swap(TestResult *result) {
+    INIT_RESULT(result, "[array_list_swap]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+
+    int int1 = 1;
+    int int2 = 2;
+    int int3 = 3;
+    Slice s = { sizeof(int), &int1 };
+    LINEAR_PUSH(&al, s);
+    s.data = &int2;
+    LINEAR_PUSH(&al, s);
+    s.data = &int3;
+    LINEAR_PUSH(&al, s);
+
+    if (INDEXING_SWAP(&al, 0, 2).status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to perform swap");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (al.item_count != 3) {
+        MSG_PRINT(result, " Incorrect item_count after swap");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    for (unsigned int index = 0; index < al.buffer.length; index += al.item_size) {
+        printf("ArrayList[%d] = %d\n", index, *(int*)((uint8_t*)al.buffer.data + index));
+    }
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 0), int) != 3) {
+        MSG_PRINT(result, " Index 0 has incorrect value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 1), int) != 2) {
+        MSG_PRINT(result, " Index 1 has incorrect value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (RESULT_UNWRAP(INDEXING_GET(&al, 2), int) != 1) {
+        MSG_PRINT(result, " Index 2 has incorrect value");
         deinit_array_list(&al);
         return result;
     }

@@ -140,12 +140,13 @@ static Result array_list_insert(Indexing* indexing, Slice item, int index) {
 	memcpy(((uint8_t*)al->buffer.data) + (offset * al->item_size), item.data, item.length);
 	memcpy(((uint8_t*)al->buffer.data) + ((offset + 1) * al->item_size), alloc_res.data.data, alloc_res.data.length);
 	FREE(al->allocator, alloc_res.data);
+	al->item_count++;
 
 	res.status = ERROR_OK;
 	return res;
 }
 
-Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
+static Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	Result res;
 	ArrayList *al;
 	Slice a, b, temp;
@@ -162,7 +163,7 @@ Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	if (index_a < 0) {
 		a_offset = al->item_count + index_a;
 	} else {
-		a_offset = al->item_count - index_a;
+		a_offset = index_a;
 	}
 
 	if (a_offset >= al->item_count) {
@@ -172,7 +173,7 @@ Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	if (index_b < 0) {
 		b_offset = al->item_count + index_a;
 	} else {
-		b_offset = al->item_count - index_a;
+		b_offset = index_a;
 	}
 
 	if (b_offset >= al->item_count) {
@@ -185,10 +186,10 @@ Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	b = slice_sub(al->buffer, b_offset, al->item_size);
 
 	res = CLONE(al->allocator, a);
+	temp = res.data;
 	if (res.status != ERROR_OK) {
 	    return res;
 	}
-	temp = res.data;
 
 	res = slice_copy(a, b);
 	if (res.status != ERROR_OK) {
@@ -245,7 +246,7 @@ static Result array_list_replace(Indexing *indexing, Slice item, int index) {
     return res;
 }
 
-Result array_list_push(Linear *linear, Slice item) {
+static Result array_list_push(Linear *linear, Slice item) {
     Result res;
     ArrayList *al;
     unsigned int offset;
@@ -266,6 +267,7 @@ Result array_list_push(Linear *linear, Slice item) {
         if (res.status != ERROR_OK) {
             return res;
         }
+        al->buffer = res.data;
     }
 
     res = slice_copy(slice_sub(al->buffer, offset, al->item_size), item);
@@ -278,7 +280,7 @@ Result array_list_push(Linear *linear, Slice item) {
     return res;
 }
 
-Result array_list_pop(Linear *linear) {
+static Result array_list_pop(Linear *linear) {
     Result res;
     ArrayList *al;
     BASE_ERROR_RESULT(res);
@@ -316,6 +318,7 @@ Result new_array_list(Allocator* allocator, unsigned int item_size, unsigned int
 		return res;
 	}
 	al.buffer = alloc_res.data;
+	memset(al.buffer.data, 0, al.buffer.length);
 
 	al.outside_functions.get = array_list_get;
 	al.outside_functions.index_of = array_list_index_of;

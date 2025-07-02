@@ -53,3 +53,22 @@ TestResult *slice_sub_test(TestResult *result) {
 	result->status = TEST_PASS;
 	return result;
 }
+
+TestResult *slice_copy_test(TestResult *result) {
+    char test_data1[20];
+    char test_data2[20];
+    INIT_RESULT(result, "[slice_copy_test]");
+
+    sprintf(test_data1, "This is a test");
+    Slice s1 = { 14, test_data1 };
+    Slice s2 = { 14, test_data2 };
+
+    Result res = slice_copy(s2, s1);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to perform slice copy");
+        return result;
+    }
+
+    // TODO: finish this test
+    return result;
+}
