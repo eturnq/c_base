@@ -1,5 +1,7 @@
 LIB=base.a
-OBJS=memory/heap.o utilities/hash.o utilities/queue.o utilities/slice.o utilities/stack.o
+MEM_OBJS=memory/heap.o
+UTIL_OBJS=utilities/arraylist.o utilities/hash.o utilities/queue.o utilities/slice.o utilities/stack.o
+OBJS=$(MEM_OBJS) $(UTIL_OBJS)
 CFLAGS=-Wall -Wextra
 LDFLAGS=-L. -l:$(LIB)
 

@@ -29,6 +29,7 @@ struct result_s {
 };
 
 int slice_cmp(Slice, Slice);
+Slice slice_sub(Slice a, int offset, unsigned int length);
 
 #define BASE_ERROR_RESULT(result) \
 	result.status = ERROR_ERR; \
@@ -65,5 +66,20 @@ Result deinit_stack_collection(StackCollection *stack);
 typedef struct queue_collection_s QueueCollection;
 Result new_queue_collection(Allocator*, unsigned int, unsigned int);
 Result deinit_queue_collection(QueueCollection*);
+
+typedef struct indexing_s Indexing;
+struct indexing_s {
+	Linear linear_functions;
+	Result (*get)(Indexing*, int);
+	Result (*index_of)(Indexing*, Slice);
+	Result (*remove)(Indexing*, int);
+	Result (*insert)(Indexing*, Slice, int);
+	Result (*swap)(Indexing*, int, int);
+	Result (*replace)(Indexing*, Slice, int);
+};
+
+typedef struct array_list_s ArrayList;
+Result new_array_list(Allocator*, unsigned int, unsigned int);
+Result deinit_array_list(ArrayList*);
 
 #endif

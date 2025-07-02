@@ -53,6 +53,32 @@ TestResult *slice_compare(TestResult *result) {
 	return result;
 }
 
+TestResult *slice_sub_test(TestResult *result) {
+	Slice s1, s2;
+	char test_data[20];
+	result->status = TEST_FAIL;
+	sprintf(result->message, "[slice_sub]");
+
+	sprintf(test_data, "This is a test");
+	s1.data = test_data;
+	s1.length = 14;
+
+	s2 = slice_sub(s1, 5, 9);
+	
+	if (s2.length != 9) {
+		sprintf(result->message + strlen(result->message), " s2 has the wrong length");
+		return result;
+	}
+
+	if (strncmp("is a test", s2.data, s2.length) != 0) {
+		sprintf(result->message + strlen(result->message), " s2 has the wrong data");
+		return result;
+	}
+
+	result->status = TEST_PASS;
+	return result;
+}
+
 TestResult *heap_allocation(TestResult *result) {
 	result->status = TEST_FAIL;
 	sprintf(result->message, "[heap_allocation]");
@@ -265,10 +291,11 @@ TestResult *queue_push_pop(TestResult *result) {
 	return result;
 }
 
-#define TEST_COUNT 9
+#define TEST_COUNT 10
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
+	slice_sub_test,
 	heap_allocation,
 	heap_reallocation,
 	heap_freeall_should_fail,
