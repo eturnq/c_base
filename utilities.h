@@ -1,17 +1,14 @@
-#ifndef _UTILITIES_H_
-#define _UTILITIES_H_
-
+#pragma once
 #include "memory.h"
 
 #include <stdint.h>
 
 typedef struct allocator_s Allocator;
 
-typedef struct slice_s Slice;
-struct slice_s {
+typedef struct slice_s {
 	unsigned int length;
 	void *data;
-};
+} Slice;
 
 #define IS_NULL_SLICE(slice) (slice.length == 0 || slice.data == 0)
 
@@ -30,6 +27,7 @@ struct result_s {
 
 int slice_cmp(Slice, Slice);
 Slice slice_sub(Slice a, int offset, unsigned int length);
+Result slice_copy(Slice a, Slice b);
 
 #define BASE_ERROR_RESULT(result) \
 	result.status = ERROR_ERR; \
@@ -82,4 +80,6 @@ typedef struct array_list_s ArrayList;
 Result new_array_list(Allocator*, unsigned int, unsigned int);
 Result deinit_array_list(ArrayList*);
 
-#endif
+#include "utilities/arraylist.h"
+#include "utilities/queue.h"
+#include "utilities/stack.h"

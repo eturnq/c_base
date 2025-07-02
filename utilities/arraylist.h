@@ -1,5 +1,4 @@
-#ifndef UTILITIES_ARRAYLIST_H
-#define UTILITIES_ARRAYLIST_H
+#pragma once
 
 #include "../utilities.h"
 
@@ -10,5 +9,3 @@ struct array_list_s {
 	unsigned int item_size;
 	unsigned int item_count;
 };
-
-#endif

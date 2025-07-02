@@ -1,6 +1,4 @@
-#ifndef _MEMORY_H_
-#define _MEMORY_H_
-
+#pragma once
 #include "utilities.h"
 
 typedef struct allocator_s Allocator;
@@ -11,12 +9,14 @@ struct allocator_s {
 	Result (*realloc)(Allocator*, Slice, unsigned int);
 	Result (*free)(Allocator*, Slice);
 	Result (*freeall)(Allocator*);
+	Result (*clone)(Allocator*, Slice);
 };
 
 #define ALLOC(allocator, length) (((Allocator*)allocator)->alloc(allocator, length))
 #define REALLOC(allocator, ptr, length) (((Allocator*)allocator)->realloc(allocator, ptr, length))
 #define FREE(allocator, ptr) (((Allocator*)allocator)->free(allocator, ptr))
 #define FREEALL(allocator) (((Allocator*)allocator)->freeall(allocator))
+#define CLONE(allocator, ptr) (((Allocator*)allocator)->clone(allocator, ptr))
 
 Allocator *get_raw_heap_allocator(void);
 
@@ -24,5 +24,3 @@ struct heap_allocator_s;
 typedef struct heap_allocator_s HeapAllocator;
 
 #include "memory/heap.h"
-
-#endif

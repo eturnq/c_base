@@ -1,5 +1,4 @@
 #include "arraylist.h"
-#include "stack.h"
 
 #include <string.h>
 
@@ -7,7 +6,7 @@ static Result array_list_get(Indexing* indexing, int index) {
 	Result res;
 	ArrayList *al;
 	unsigned int offset;
-	static Slice val;
+	Slice val;
 	BASE_ERROR_RESULT(res);
 
 	if (indexing == 0) {
@@ -37,8 +36,8 @@ static Result array_list_get(Indexing* indexing, int index) {
 static Result array_list_index_of(Indexing* indexing, Slice item) {
 	Result res;
 	ArrayList *al;
-	static unsigned int item_index;
-	static Slice val;
+	unsigned int item_index;
+	Slice val;
 	BASE_ERROR_RESULT(res);
 
 	if (indexing == 0 || item.data == 0) {
@@ -54,7 +53,7 @@ static Result array_list_index_of(Indexing* indexing, Slice item) {
 		Slice check_item;
 		check_item.length = al->item_size;
 		check_item.data = (void*)((uint8_t*)al->buffer.data + (item_index * al->item_size));
-		
+
 		if (slice_cmp(check_item, item) == 0) {
 			res.status = ERROR_OK;
 			val.length = sizeof(unsigned int);
@@ -77,7 +76,7 @@ static Result array_list_remove(Indexing *indexing, int index) {
 		return res;
 	}
 
-	al = (ArrayList*) indexing;	
+	al = (ArrayList*) indexing;
 
 	if (index < 0) {
 		offset = al->item_count + index;
@@ -93,7 +92,7 @@ static Result array_list_remove(Indexing *indexing, int index) {
 		memcpy(al->buffer.data, (uint8_t*)al->buffer.data + (offset * al->item_size), al->buffer.length - (offset * al->item_size));
 	}
 	al->item_count--;
-	
+
 	res.status = ERROR_OK;
 	return res;
 }
@@ -146,20 +145,168 @@ static Result array_list_insert(Indexing* indexing, Slice item, int index) {
 	return res;
 }
 
+Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
+	Result res;
+	ArrayList *al;
+	Slice a, b, temp;
+	unsigned int a_offset, b_offset;
+
+	BASE_ERROR_RESULT(res);
+
+	if (indexing == 0) {
+		return res;
+	}
+
+	al = (ArrayList*) indexing;
+
+	if (index_a < 0) {
+		a_offset = al->item_count + index_a;
+	} else {
+		a_offset = al->item_count - index_a;
+	}
+
+	if (a_offset >= al->item_count) {
+		return res;
+	}
+
+	if (index_b < 0) {
+		b_offset = al->item_count + index_a;
+	} else {
+		b_offset = al->item_count - index_a;
+	}
+
+	if (b_offset >= al->item_count) {
+		return res;
+	}
+
+	a_offset *= al->item_size;
+	b_offset *= al->item_size;
+	a = slice_sub(al->buffer, a_offset, al->item_size);
+	b = slice_sub(al->buffer, b_offset, al->item_size);
+
+	res = CLONE(al->allocator, a);
+	if (res.status != ERROR_OK) {
+	    return res;
+	}
+	temp = res.data;
+
+	res = slice_copy(a, b);
+	if (res.status != ERROR_OK) {
+	    return res;
+	}
+
+	res = slice_copy(b, temp);
+	if (res.status != ERROR_OK) {
+	    return res;
+	}
+
+	res = FREE(al->allocator, temp);
+	if (res.status != ERROR_OK) {
+	    return res;
+	}
+
+	res.status = ERROR_OK;
+	res.data.length = 0;
+	res.data.data = 0;
+
+	return res;
+}
+
+static Result array_list_replace(Indexing *indexing, Slice item, int index) {
+    Result res;
+    ArrayList *al;
+    Slice dest;
+    unsigned int offset;
+    BASE_ERROR_RESULT(res);
+
+    if (indexing == 0 || item.data == 0) {
+        return res;
+    }
+
+    al = (ArrayList *) indexing;
+    if (al->item_size != item.length) {
+        return res;
+    }
+
+    if (index < 0) {
+        offset = al->item_count + index;
+    } else {
+        offset = index;
+    }
+
+    if (offset >= al->item_count) {
+        return res;
+    }
+    offset *= al->item_size;
+
+    dest = slice_sub(al->buffer, offset, al->item_size);
+    res = slice_copy(dest, item);
+
+    return res;
+}
+
+Result array_list_push(Linear *linear, Slice item) {
+    Result res;
+    ArrayList *al;
+    unsigned int offset;
+    BASE_ERROR_RESULT(res);
+
+    if (linear == 0 || item.data == 0) {
+        return res;
+    }
+
+    al = (ArrayList *) linear;
+    if (item.length != al->item_size) {
+        return res;
+    }
+
+    offset = al->item_count * al->item_size;
+    if (offset >= al->buffer.length) {
+        res = REALLOC(al->allocator, al->buffer, al->buffer.length << 1);
+        if (res.status != ERROR_OK) {
+            return res;
+        }
+    }
+
+    res = slice_copy(slice_sub(al->buffer, offset, al->item_size), item);
+    if (res.status != ERROR_OK) {
+        return res;
+    }
+
+    al->item_count++;
+
+    return res;
+}
+
+Result array_list_pop(Linear *linear) {
+    Result res;
+    ArrayList *al;
+    BASE_ERROR_RESULT(res);
+
+    if (linear == 0) {
+        return res;
+    }
+
+    al = (ArrayList *) linear;
+    if (al->item_count < 1) {
+        return res;
+    }
+
+    al->item_count--;
+    res.data = slice_sub(al->buffer, (al->item_count) * al->item_size, al->item_size);
+    res.status = ERROR_OK;
+
+    return res;
+}
+
 Result new_array_list(Allocator* allocator, unsigned int item_size, unsigned int max_count) {
 	Result res, alloc_res;
-	static ArrayList al;
+	ArrayList al;
 	BASE_ERROR_RESULT(res);
 
 	if (allocator == 0 || item_size == 0 || max_count == 0) {
 		return res;
 	}
-
-	/*stack_res = new_stack_collection(allocator, item_size, max_count);
-	if (stack_res.status != ERROR_OK) {
-		return res;
-	}
-	StackCollection stack = *((StackCollection*)stack_res.data.data);*/
 
 	al.allocator = allocator;
 	al.item_size = item_size;
@@ -174,8 +321,11 @@ Result new_array_list(Allocator* allocator, unsigned int item_size, unsigned int
 	al.outside_functions.index_of = array_list_index_of;
 	al.outside_functions.remove = array_list_remove;
 	al.outside_functions.insert = array_list_insert;
-	// TODO: set outside functions
-	
+	al.outside_functions.swap = array_list_swap;
+	al.outside_functions.replace = array_list_replace;
+	al.outside_functions.linear_functions.push = array_list_push;
+	al.outside_functions.linear_functions.pop = array_list_pop;
+
 	res.status = ERROR_OK;
 	res.data.length = sizeof(ArrayList);
 	res.data.data = &al;

@@ -1,5 +1,4 @@
-#ifndef _UTILITIES_STACK_H_
-#define _UTILITIES_STACK_H_
+#pragma once
 
 #include "../utilities.h"
 
@@ -10,5 +9,3 @@ struct stack_collection_s {
 	unsigned int item_count;
 	Slice buffer;
 };
-
-#endif

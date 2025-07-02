@@ -3,8 +3,6 @@
 
 #include "memory.h"
 #include "utilities.h"
-#include "utilities/queue.h"
-#include "utilities/stack.h"
 
 enum test_status {
 	TEST_PASS,
@@ -19,15 +17,20 @@ typedef struct {
 
 typedef TestResult *(*Test)(TestResult*);
 
+#define INIT_RESULT(result, name) \
+result->status = TEST_FAIL; \
+sprintf(result->message, name)
+
+#define MSG_PRINT(result, msg) sprintf(result->message + strlen(result->message), msg)
+
 TestResult *always_passes(TestResult* result) {
+	INIT_RESULT(result, "[always_passes]");
 	result->status = TEST_PASS;
-	strcpy(result->message, "[always_passes]");
 	return result;
 }
 
 TestResult *slice_compare(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[slice_compare]");
+	INIT_RESULT(result, "[slice_compare]");
 
 	int int1 = 1;
 	int int2 = 2;
@@ -35,17 +38,17 @@ TestResult *slice_compare(TestResult *result) {
 	Slice s2 = { sizeof(int), &int2 };
 
 	if (slice_cmp(s1, s1) != 0) {
-		sprintf(result->message + strlen(result->message), " slice_cmp should return 0");
+		MSG_PRINT(result, " slice_cmp should return 0");
 		return result;
 	}
 
 	if (slice_cmp(s1, s2) != -1) {
-		sprintf(result->message + strlen(result->message), " slice_cmp should return -1");
+		MSG_PRINT(result, " slice_cmp should return -1");
 		return result;
 	}
 
 	if (slice_cmp(s2, s1) != 1) {
-		sprintf(result->message + strlen(result->message), " slice_cmp should return 1");
+		MSG_PRINT(result, " slice_cmp should return 1");
 		return result;
 	}
 
@@ -56,22 +59,21 @@ TestResult *slice_compare(TestResult *result) {
 TestResult *slice_sub_test(TestResult *result) {
 	Slice s1, s2;
 	char test_data[20];
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[slice_sub]");
+	INIT_RESULT(result, "[slice_sub]");
 
 	sprintf(test_data, "This is a test");
 	s1.data = test_data;
 	s1.length = 14;
 
 	s2 = slice_sub(s1, 5, 9);
-	
+
 	if (s2.length != 9) {
-		sprintf(result->message + strlen(result->message), " s2 has the wrong length");
+		MSG_PRINT(result, " s2 has the wrong length");
 		return result;
 	}
 
 	if (strncmp("is a test", s2.data, s2.length) != 0) {
-		sprintf(result->message + strlen(result->message), " s2 has the wrong data");
+		MSG_PRINT(result, " s2 has the wrong data");
 		return result;
 	}
 
@@ -80,20 +82,20 @@ TestResult *slice_sub_test(TestResult *result) {
 }
 
 TestResult *heap_allocation(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[heap_allocation]");
+	INIT_RESULT(result, "[heap_allocation]");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
 
 	Result alloc_res = ALLOC(raw_heap, 5);
 	if (alloc_res.status != ERROR_OK || IS_NULL_SLICE(alloc_res.data) || alloc_res.data.length != 5) {
-		sprintf(result->message + strlen(result->message), " Raw allocation failed");
+		MSG_PRINT(result, " Raw allocation failed");
 		return result;
 	}
 
 	Result alloc_free = FREE(raw_heap, alloc_res.data);
 	if (alloc_free.status != ERROR_OK || !IS_NULL_SLICE(alloc_free.data)) {
 		sprintf(result->message + strlen(result->message), " Raw free failed");
+		MSG_PRINT(result, " Raw free failed");
 		return result;
 	}
 
@@ -102,8 +104,7 @@ TestResult *heap_allocation(TestResult *result) {
 }
 
 TestResult *heap_reallocation(TestResult *result) {
-	result->status = TEST_FAIL;
-	strcpy(result->message, "[heap_reallocation]");
+	INIT_RESULT(result, "[heap_reallocation]");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
 
@@ -111,13 +112,13 @@ TestResult *heap_reallocation(TestResult *result) {
 	Result realloc_res = REALLOC(raw_heap, alloc_res.data, 10);
 
 	if (realloc_res.status != ERROR_OK) {
-		strcpy((char*)result->message + strlen(result->message), " Raw reallocation returned an error");
+		MSG_PRINT(result, " Raw reallocation returned an error");
 		FREE(raw_heap, alloc_res.data);
 		return result;
 	}
 
 	if (IS_NULL_SLICE(realloc_res.data) || realloc_res.data.length != 10) {
-		sprintf((char*)result->message + strlen(result->message), " Raw realoocation returned invalid slice: length %u", realloc_res.data.length);
+		sprintf((char*)result->message + strlen(result->message), " Raw reallocation returned invalid slice: length %u", realloc_res.data.length);
 		FREE(raw_heap, alloc_res.data);
 		if (realloc_res.data.length != 0) {
 			FREE(raw_heap, realloc_res.data);
@@ -125,7 +126,6 @@ TestResult *heap_reallocation(TestResult *result) {
 		return result;
 	}
 
-	//FREE(raw_heap, alloc_res.data);
 	FREE(raw_heap, realloc_res.data);
 	result->status = TEST_PASS;
 
@@ -133,37 +133,58 @@ TestResult *heap_reallocation(TestResult *result) {
 }
 
 TestResult *heap_freeall_should_fail(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[heap_freeall_should_fail]");
+	INIT_RESULT(result, "[heap_freeall_should_fail]");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
 	Result raw_heap_free = FREEALL(raw_heap);
 	if (raw_heap_free.status != ERROR_ERR || !IS_NULL_SLICE(raw_heap_free.data)) {
-		sprintf(result->message + strlen(result->message), " freeall succeeds on raw heap allocator");
+		MSG_PRINT(result, " freeall succeeds on raw heap allocator");
 		return result;
 	}
 	Result raw_heap_alloc = ALLOC(raw_heap, 1024);
 	raw_heap_free = FREEALL(raw_heap);
 
 	if (raw_heap_free.status != ERROR_ERR || !IS_NULL_SLICE(raw_heap_free.data)) {
-		sprintf(result->message + strlen(result->message), " freeall succeeds on raw heap allocator after allocation");
+		MSG_PRINT(result, " freeall succeeds on raw heap allocator after allocation");
 		FREE(raw_heap, raw_heap_alloc.data);
 		return result;
 	}
-	
+
 	FREE(raw_heap, raw_heap_alloc.data);
 	result->status = TEST_PASS;
 	return result;
 }
 
+TestResult *heap_clone(TestResult *result) {
+    INIT_RESULT(result, "[heap_clone]");
+
+    Allocator* raw_heap = get_raw_heap_allocator();
+    Slice a = { 14, "This is a test" };
+
+    Result res = CLONE(raw_heap, a);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to clone the Slice");
+        return result;
+    }
+
+    if (slice_cmp(a, res.data) != 0) {
+        FREE(raw_heap, res.data);
+        MSG_PRINT(result, " Slices are not equivalent");
+        return result;
+    }
+
+    FREE(raw_heap, res.data);
+    result->status = TEST_PASS;
+    return result;
+}
+
 TestResult *stack_init_deinit(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[stack_init_deinit]");
+	INIT_RESULT(result, "[stack_init_deinit]");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
 	Result stack_result = new_stack_collection(raw_heap, sizeof(int), 1);
 	if (stack_result.status != ERROR_OK || IS_NULL_SLICE(stack_result.data)) {
-		sprintf(result->message + strlen(result->message), " Unable to instantiate new stack collection");
+		MSG_PRINT(result, " Unable to instantiate new stack collection");
 		return result;
 	}
 
@@ -171,7 +192,7 @@ TestResult *stack_init_deinit(TestResult *result) {
 
 	stack_result = deinit_stack_collection(&stack);
 	if (stack_result.status != ERROR_OK) {
-		sprintf(result->message + strlen(result->message), " Unable to deinitialize stack collection");
+		MSG_PRINT(result, " Unabel to deinitialize stack collection");
 		return result;
 	}
 
@@ -180,8 +201,7 @@ TestResult *stack_init_deinit(TestResult *result) {
 }
 
 TestResult *stack_push_pop(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[stack_push_pop]");
+	INIT_RESULT(result, "[stack_push_pop]");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
 	Result stack_result = new_stack_collection(raw_heap, sizeof(int), 16);
@@ -194,27 +214,27 @@ TestResult *stack_push_pop(TestResult *result) {
 
 	stack_result = LINEAR_PUSH(&stack, int1_s);
 	if (stack_result.status != ERROR_OK) {
-		sprintf(result->message + strlen(result->message), "Unable to push first value to stack collection");
+		MSG_PRINT(result, " Unable to push first value to stack collection");
 		deinit_stack_collection(&stack);
 		return result;
 	}
 
 	stack_result = LINEAR_PUSH(&stack, int2_s);
 	if (stack_result.status != ERROR_OK) {
-		sprintf(result->message + strlen(result->message), "Unable to push second value to stack collection");
+		MSG_PRINT(result, " Unable to push second value to stack collection");
 		deinit_stack_collection(&stack);
 		return result;
 	}
 
 	stack_result = LINEAR_POP(&stack);
 	if (stack_result.status != ERROR_OK || slice_cmp(int2_s, stack_result.data) != 0) {
-		sprintf(result->message + strlen(result->message), "Popped wrong value (should be 2)");
+		MSG_PRINT(result, " Popped wrong value (should be 2");
 		deinit_stack_collection(&stack);
 		return result;
 	}
 	stack_result = LINEAR_POP(&stack);
 	if (stack_result.status != ERROR_OK || slice_cmp(int1_s, stack_result.data) != 0) {
-		sprintf(result->message + strlen(result->message), "Popped wrong value (should be 1)");
+		MSG_PRINT(result, " Popped wrong value (should be 1");
 		deinit_stack_collection(&stack);
 		return result;
 	}
@@ -225,20 +245,19 @@ TestResult *stack_push_pop(TestResult *result) {
 }
 
 TestResult *queue_init_deinit(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[queue_init_deinit]");
+	INIT_RESULT(result, "[queue_init_deinit]");
 
 	Allocator *raw_heap = get_raw_heap_allocator();
 	Result queue_res = new_queue_collection(raw_heap, sizeof(int), 2);
 	if (queue_res.status != ERROR_OK || queue_res.data.length != sizeof(QueueCollection) || queue_res.data.data == 0) {
-		sprintf(result->message + strlen(result->message), " Unable to instatiate new queue collection");
+		MSG_PRINT(result, " Unable to instantiate new queue collection");
 		return result;
 	}
 
 	QueueCollection queue = *((QueueCollection*)queue_res.data.data);
 	queue_res = deinit_queue_collection(&queue);
 	if (queue_res.status != ERROR_OK || !IS_NULL_SLICE(queue_res.data)) {
-		sprintf(result->message + strlen(result->message), " Unable to deinitialize queue collection");
+		MSG_PRINT(result, " Unable to deinitialize queue collection");
 		return result;
 	}
 
@@ -247,8 +266,7 @@ TestResult *queue_init_deinit(TestResult *result) {
 }
 
 TestResult *queue_push_pop(TestResult *result) {
-	result->status = TEST_FAIL;
-	sprintf(result->message, "[queue_push_pop]");
+	INIT_RESULT(result, "[queue_push_pop]");
 
 	Allocator *raw_heap = get_raw_heap_allocator();
 	Result queue_res = new_queue_collection(raw_heap, sizeof(int), 4 );
@@ -258,31 +276,31 @@ TestResult *queue_push_pop(TestResult *result) {
 	int int2 = 2;
 	Slice int1_s = { sizeof(int), &int1 };
 	Slice int2_s = { sizeof(int), &int2 };
-	
+
 	queue_res = LINEAR_PUSH(&queue, int1_s);
 	if (queue_res.status != ERROR_OK) {
-		sprintf(result->message + strlen(result->message), " Unable to push first value");
+		MSG_PRINT(result, " Unable to push first value");
 		deinit_queue_collection(&queue);
 		return result;
 	}
 
 	queue_res = LINEAR_PUSH(&queue, int2_s);
 	if (queue_res.status != ERROR_OK) {
-		sprintf(result->message + strlen(result->message), " Unable to push second value");
+		MSG_PRINT(result, " Unable to push second value");
 		deinit_queue_collection(&queue);
 		return result;
 	}
 
 	queue_res = LINEAR_POP(&queue);
 	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int1_s) != 0) {
-		sprintf(result->message + strlen(result->message), " Unable to pop value 1");
+		MSG_PRINT(result, " Unable to pop value 1");
 		deinit_queue_collection(&queue);
 		return result;
 	}
 
 	queue_res = LINEAR_POP(&queue);
 	if (queue_res.status != ERROR_OK || slice_cmp(queue_res.data, int2_s) != 0) {
-		sprintf(result->message + strlen(result->message), " Unable to pop value 2");
+		MSG_PRINT(result, " Unable to pop value 2");
 		deinit_queue_collection(&queue);
 		return result;
 	}
@@ -291,7 +309,88 @@ TestResult *queue_push_pop(TestResult *result) {
 	return result;
 }
 
-#define TEST_COUNT 10
+TestResult *array_list_init_deinit(TestResult *result) {
+    INIT_RESULT(result, "[array_list_init_deinit]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    Result res = new_array_list(heap, sizeof(int), 16);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to create new ArrayList");
+        return result;
+    }
+
+    ArrayList al = *((ArrayList*)res.data.data);
+
+    res = deinit_array_list(&al);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to deinit ArrayList");
+        return result;
+    }
+
+    result->status = TEST_PASS;
+    return result;
+}
+
+TestResult *array_list_push_pop(TestResult *result) {
+    INIT_RESULT(result, "[array_list_push_pop]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    Result res = new_array_list(heap, sizeof(int), 16);
+    ArrayList al = *((ArrayList*)res.data.data);
+    int int1 = 1;
+    int int2 = 2;
+    Slice s1 = { sizeof(int), &int1 };
+    Slice s2 = { sizeof(int), &int2 };
+
+    res = LINEAR_PUSH(&al, s1);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to push first value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    res = LINEAR_PUSH(&al, s2);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to push second value");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    res = LINEAR_POP(&al);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to pop second value");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (slice_cmp(res.data, s2) != 0) {
+        MSG_PRINT(result, " Popped the wrong value for value 2");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    res = LINEAR_POP(&al);
+    if (res.status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to pop first value");
+        deinit_array_list(&al);
+        return result;
+    }
+    if (slice_cmp(res.data, s1) != 0) {
+        MSG_PRINT(result, " Popped the wrong value for value 1");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    if (al.item_count != 0) {
+        MSG_PRINT(result, " Item count should be 0 after all items popped");
+        deinit_array_list(&al);
+        return result;
+    }
+
+    result->status = TEST_PASS;
+    return result;
+}
+
+#define TEST_COUNT 13
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -299,10 +398,13 @@ Test tests[TEST_COUNT] = {
 	heap_allocation,
 	heap_reallocation,
 	heap_freeall_should_fail,
+	heap_clone,
 	stack_init_deinit,
 	stack_push_pop,
 	queue_init_deinit,
-	queue_push_pop
+	queue_push_pop,
+	array_list_init_deinit,
+	array_list_push_pop
 };
 
 int main() {

@@ -1,6 +1,5 @@
 #include "../utilities.h"
 
-#include <stdio.h>
 #include <string.h>
 
 int slice_cmp(Slice a, Slice b) {
@@ -39,4 +38,21 @@ Slice slice_sub(Slice a, int offset, unsigned int length) {
 	b.length = length;
 	b.data = ((uint8_t*)a.data) + actual_offset;
 	return b;
+}
+
+Result slice_copy(Slice a, Slice b) {
+    Result res;
+    BASE_ERROR_RESULT(res);
+
+    if (b.length == 0 || b.data == 0 || a.length < b.length || a.data == 0) {
+        return res;
+    }
+
+    memcpy(a.data, b.data, b.length);
+
+    res.status = ERROR_OK;
+    res.data.length = b.length;
+    res.data.data = a.data;
+
+    return res;
 }

@@ -1,5 +1,4 @@
-#ifndef _UTILITIES_QUEUE_H_
-#define _UTILITIES_QUEUE_H_
+#pragma once
 
 #include "../utilities.h"
 
@@ -12,5 +11,3 @@ struct queue_collection_s {
 	unsigned int item_size;
 	unsigned int item_count;
 };
-
-#endif
