@@ -25,6 +25,8 @@ struct result_s {
 	Slice data;
 };
 
+#define RESULT_UNWRAP(result, type) (*((type*)result.data.data))
+
 int slice_cmp(Slice, Slice);
 Slice slice_sub(Slice a, int offset, unsigned int length);
 Result slice_copy(Slice a, Slice b);
@@ -75,6 +77,13 @@ struct indexing_s {
 	Result (*swap)(Indexing*, int, int);
 	Result (*replace)(Indexing*, Slice, int);
 };
+
+#define INDEXING_GET(collection, index) (((Indexing*)collection)->get((Indexing*)collection, index))
+#define INDEXING_INDEX_OF(collection, ptr) (((Indexing*)collection)->index_of((Indexing*)collection, ptr))
+#define INDEXING_REMOVE(collection, index) (((Indexing*)collection)->remove((Indexing*)collection, index))
+#define INDEXING_INSERT(collection, ptr, index) (((Indexing*)collection)->insert((Indexing*)collection, ptr, index))
+#define INDEXING_SWAP(collection, a, b) (((Indexing*)collection)->swap((Indexing*)collection, a, b))
+#define INDEXING_REPLACE(collection, ptr, index) (((Indexing*)collection)->replace((Indexing*)collection, ptr, index))
 
 typedef struct array_list_s ArrayList;
 Result new_array_list(Allocator*, unsigned int, unsigned int);

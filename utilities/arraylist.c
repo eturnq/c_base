@@ -17,10 +17,10 @@ static Result array_list_get(Indexing* indexing, int index) {
 	if (index < 0) {
 		offset = al->item_count + index;
 	} else {
-		offset = al->item_count - index;
+		offset = index;
 	}
 
-	if (offset > al->item_count) {
+	if (offset >= al->item_count) {
 		return res;
 	}
 
@@ -81,10 +81,10 @@ static Result array_list_remove(Indexing *indexing, int index) {
 	if (index < 0) {
 		offset = al->item_count + index;
 	} else {
-		offset = al->item_count - index;
+		offset = index;
 	}
 
-	if (offset > al->item_count) {
+	if (offset >= al->item_count) {
 		return res;
 	}
 
