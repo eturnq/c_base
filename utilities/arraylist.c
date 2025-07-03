@@ -171,9 +171,9 @@ static Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	}
 
 	if (index_b < 0) {
-		b_offset = al->item_count + index_a;
+		b_offset = al->item_count + index_b;
 	} else {
-		b_offset = index_a;
+		b_offset = index_b;
 	}
 
 	if (b_offset >= al->item_count) {

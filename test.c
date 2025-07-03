@@ -11,11 +11,12 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 19
+#define TEST_COUNT 20
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
 	slice_sub_test,
+	slice_copy_test,
 	heap_allocation,
 	heap_reallocation,
 	heap_freeall_should_fail,

@@ -1,6 +1,5 @@
 #include "arraylist_test.h"
 #include "../utilities.h"
-#include <stdio.h>
 
 TestResult *array_list_init_deinit(TestResult *result) {
     INIT_RESULT(result, "[array_list_init_deinit]");
@@ -356,9 +355,6 @@ TestResult *array_list_swap(TestResult *result) {
         return result;
     }
 
-    for (unsigned int index = 0; index < al.buffer.length; index += al.item_size) {
-        printf("ArrayList[%d] = %d\n", index, *(int*)((uint8_t*)al.buffer.data + index));
-    }
     if (RESULT_UNWRAP(INDEXING_GET(&al, 0), int) != 3) {
         MSG_PRINT(result, " Index 0 has incorrect value");
         deinit_array_list(&al);
@@ -379,5 +375,33 @@ TestResult *array_list_swap(TestResult *result) {
 
     deinit_array_list(&al);
     result->status = TEST_PASS;
+    return result;
+}
+
+TestResult *array_list_replace(TestResult *result) {
+    INIT_RESULT(result, "[array_list_replace]");
+
+    Allocator *heap = get_raw_heap_allocator();
+    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+
+    int int1 = 1;
+    int int2 = 2;
+    int int3 = 3;
+    Slice s = { sizeof(int), &int1 };
+
+    LINEAR_PUSH(&al, s);
+    s.data = &int2;
+    LINEAR_PUSH(&al, s);
+    s.data = &int3;
+
+    if (INDEXING_REPLACE(&al, s, 0).status != ERROR_OK) {
+        MSG_PRINT(result, " Unable to do replacement");
+        deinit_array_list(&al);
+        return result;
+    }
+
+
+
+    // TODO: finish this test
     return result;
 }

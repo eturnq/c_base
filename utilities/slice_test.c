@@ -1,5 +1,4 @@
 #include "slice_test.h"
-#include "../testing/test.h"
 #include "../utilities.h"
 
 TestResult *slice_compare(TestResult *result) {
@@ -69,6 +68,11 @@ TestResult *slice_copy_test(TestResult *result) {
         return result;
     }
 
-    // TODO: finish this test
+    if (slice_cmp(s1, s2) != 0) {
+        MSG_PRINT(result, " Slices are not equivalent");
+        return result;
+    }
+
+    result->status = TEST_PASS;
     return result;
 }

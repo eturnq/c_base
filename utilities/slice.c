@@ -1,5 +1,4 @@
 #include "../utilities.h"
-
 #include <string.h>
 
 int slice_cmp(Slice a, Slice b) {

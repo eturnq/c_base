@@ -10,3 +10,4 @@ TestResult *array_list_index_of(TestResult *result);
 TestResult *array_list_remove(TestResult *result);
 TestResult *array_list_insert(TestResult *result);
 TestResult *array_list_swap(TestResult *result);
+TestResult *array_list_replace(TestResult *result);
