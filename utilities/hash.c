@@ -6,6 +6,7 @@ uint8_t hash8_slice(Slice text) {
 	for (unsigned int index = 0; index < text.length; index++) {
 	    uint8_t byte = ((uint8_t*)text.data)[index];
 		hash += byte;
+		hash *= byte;
 	}
 
 	return hash;
@@ -55,7 +56,7 @@ static Result hashmap8_add(Map* map, Slice key, Slice value) {
 		return retval;
 	}
 
-	hashmap->offsets[hash] = offset;
+	hashmap->offsets[--hash] = offset;
 	retval.data = value;
 
 	return retval;

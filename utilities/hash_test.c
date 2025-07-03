@@ -159,12 +159,13 @@ TestResult *hashmap8_get(TestResult *result) {
 
     for (int index = 0; index < 3; index++) {
         res = MAP_GET(&hm, keys[index]);
+        Slice kvp_s = res.data;
         if (res.status != ERROR_OK) {
             deinit_hashmap8(&hm);
             sprintf(result->message + strlen(result->message), " Unable to perform get with key %d", index);
             return result;
         }
-        struct keyval_pair_s kvp = RESULT_UNWRAP(res, struct keyval_pair_s);
+        struct keyval_pair_s kvp = *(struct keyval_pair_s *)kvp_s.data;
         if (kvp.key.data == 0 || kvp.key.length != keys[index].length) {
             deinit_hashmap8(&hm);
             sprintf(result->message + strlen(result->message), " Invalid key data after get %d", index);
