@@ -27,7 +27,7 @@ static Result stack_push(Linear *collection, Slice item) {
 		stack->buffer = result.data;
 	}
 
-	strncpy((char*)stack->buffer.data + new_offset, item.data, stack->item_size);
+	memcpy((char*)stack->buffer.data + new_offset, item.data, stack->item_size);
 	stack->item_count++;
 	res.status = ERROR_OK;
 

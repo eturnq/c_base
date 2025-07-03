@@ -26,7 +26,6 @@ TestResult *hashmap8_init_deinit(TestResult *result) {
 TestResult *hashmap8_add(TestResult *result) {
     Allocator *heap;
     Hashmap8 hm;
-    //Slice key, value;
     Slice keys[3];
     Slice values[3];
     int ints[3];
@@ -145,7 +144,7 @@ TestResult *hashmap8_get(TestResult *result) {
         values[index].length = sizeof(int);
     }
     keys[0].data = "int0";
-    keys[0].length = strlen(keys[0].data) - 1;
+    keys[0].length = strlen(keys[0].data);
     keys[1].data = "int1";
     keys[1].length = keys[0].length;
     keys[2].data = "int2";
@@ -162,25 +161,35 @@ TestResult *hashmap8_get(TestResult *result) {
         res = MAP_GET(&hm, keys[index]);
         if (res.status != ERROR_OK) {
             deinit_hashmap8(&hm);
-            sprintf(result->message, " Unable to perform get with key %d", index);
+            sprintf(result->message + strlen(result->message), " Unable to perform get with key %d", index);
             return result;
         }
         struct keyval_pair_s kvp = RESULT_UNWRAP(res, struct keyval_pair_s);
+        if (kvp.key.data == 0 || kvp.key.length != keys[index].length) {
+            deinit_hashmap8(&hm);
+            sprintf(result->message + strlen(result->message), " Invalid key data after get %d", index);
+            return result;
+        }
+        if (kvp.value.data == 0 || kvp.value.length != values[index].length) {
+            deinit_hashmap8(&hm);
+            sprintf(result->message + strlen(result->message), " Invalid value data after get %d", index);
+            return result;
+        }
 
         if (hm.data.item_count != 3) {
             deinit_hashmap8(&hm);
-            sprintf(result->message, " Invalid item count after get %d", index);
+            sprintf(result->message + strlen(result->message), " Invalid item count after get %d", index);
             return result;
         }
 
         if (slice_cmp(kvp.key, keys[index]) != 0) {
             deinit_hashmap8(&hm);
-            sprintf(result->message, " Invalid key after get %d", index);
+            sprintf(result->message + strlen(result->message), " Invalid key after get %d", index);
             return result;
         }
         if (slice_cmp(kvp.value, values[index]) != 0) {
             deinit_hashmap8(&hm);
-            sprintf(result->message, " Invalid value after ger %d", index);
+            sprintf(result->message + strlen(result->message), " Invalid value after ger %d", index);
             return result;
         }
     }
@@ -190,7 +199,49 @@ TestResult *hashmap8_get(TestResult *result) {
 }
 
 TestResult *hashmap8_remove(TestResult *result) {
+    Allocator *heap;
+    Hashmap8 hm;
+    Result res;
+    Slice keys[3];
+    Slice values[3];
+    int ints[3];
     INIT_RESULT(result, "[hashmap8_remove]");
+
+    for (int index = 0; index < 3; index++) {
+        ints[index] = index;
+        values[index].length = sizeof(int);
+        values[index].data = &ints[index];
+    }
+    keys[0].data = "int0";
+    keys[0].length = strlen(keys[0].data) - 1;
+    keys[1].data = "int1";
+    keys[1].length = keys[0].length;
+    keys[2].data = "int2";
+    keys[2].length = keys[0].length;
+
+    heap = get_raw_heap_allocator();
+    hm = RESULT_UNWRAP(new_hashmap8(heap), Hashmap8);
+
+    for (int index = 0; index < 3; index++) {
+        MAP_ADD(&hm, keys[index], values[index]);
+    }
+
+    res = MAP_REMOVE(&hm, keys[1]);
+    if (res.status != ERROR_OK) {
+        deinit_hashmap8(&hm);
+        MSG_PRINT(result, " Unable to perform first remove");
+        return result;
+    }
+    if (slice_cmp(res.data, values[1]) != 0) {
+        deinit_hashmap8(&hm);
+        MSG_PRINT(result, " Invalid return value after first remove");
+        return result;
+    }
+    if (hm.removals.item_count != 1) {
+        deinit_hashmap8(&hm);
+        MSG_PRINT(result, " Invalid item_count of removals after first remove");
+        return result;
+    }
 
     // TODO: finish this test
     MSG_PRINT(result, " Unimplemented");

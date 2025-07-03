@@ -5,14 +5,14 @@ UTIL_OBJS=utilities/arraylist.o utilities/hash.o utilities/queue.o utilities/sli
 UTIL_TEST_OBJS=$(UTIL_OBJS:.o=_test.o)
 TEST_OBJS=$(MEM_TEST_OBJS) $(UTIL_TEST_OBJS)
 OBJS=$(MEM_OBJS) $(UTIL_OBJS)
-CFLAGS=-Wall -Wextra
+CFLAGS=-Wall -Wextra -g
 LDFLAGS=-L. -l:$(LIB)
 
 $(LIB): $(OBJS)
 	$(AR) rcs $(LIB) $(OBJS)
 
 test: test.c $(LIB) $(TEST_OBJS)
-	$(CC) -o test test.c $(TEST_OBJS) $(LDFLAGS)
+	$(CC) -o test test.c $(TEST_OBJS) $(CFLAGS) $(LDFLAGS)
 	./test
 
 cleanlib:

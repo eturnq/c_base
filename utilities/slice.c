@@ -4,6 +4,14 @@
 int slice_cmp(Slice a, Slice b) {
 	unsigned int max_length;
 
+	if (a.length == 0 || a.data == 0) {
+	    return -1;
+	}
+
+	if (b.length == 0 || b.data == 0) {
+	    return 1;
+	}
+
 	if (a.length == b.length && a.data == b.data) {
 		return 0;
 	}
@@ -14,7 +22,7 @@ int slice_cmp(Slice a, Slice b) {
 		max_length = b.length;
 	}
 
-	return strncmp(a.data, b.data, max_length);
+	return memcmp(a.data, b.data, max_length);
 }
 
 Slice slice_sub(Slice a, int offset, unsigned int length) {

@@ -1,5 +1,4 @@
 #include "hash.h"
-#include <stdio.h>
 
 uint8_t hash8_slice(Slice text) {
 	uint8_t hash = 0;
@@ -41,7 +40,6 @@ static Result hashmap8_add(Map* map, Slice key, Slice value) {
 	    return retval;
 	}
 
-	hash--; // empty spot found. Revert last increment
 	retval = LINEAR_POP(&hashmap->removals);
 	if (retval.status == ERROR_OK) {
 	    offset = RESULT_UNWRAP(retval, unsigned int);
@@ -82,7 +80,7 @@ static Result hashmap8_get(Map* map, Slice key) {
     uint8_t hash = orig_hash;
     do {
         offset = hm->offsets[hash++];
-    } while (offset > MAX_OFFSET || hash != orig_hash);
+    } while (offset > MAX_OFFSET && hash != orig_hash);
 
     if (hash == orig_hash) {
         return res;
@@ -91,12 +89,13 @@ static Result hashmap8_get(Map* map, Slice key) {
     struct keyval_pair_s check_kvp;
     do {
         res = INDEXING_GET(&hm->data, offset);
+        Slice check_kvp_s = res.data;
         if (res.status != ERROR_OK) {
             return res;
         }
-        check_kvp = RESULT_UNWRAP(res, struct keyval_pair_s);
+        check_kvp = *((struct keyval_pair_s*)check_kvp_s.data);
         offset = hm->offsets[hash++];
-    } while(slice_cmp(check_kvp.key, key) != 0 && hash != orig_hash);
+    } while(offset <= MAX_OFFSET && slice_cmp(check_kvp.key, key) != 0 && hash != orig_hash);
 
     if (hash == orig_hash) {
         res.data.length = 0;
@@ -129,7 +128,7 @@ static Result hashmap8_remove(Map* map, Slice key) {
     hash = orig_hash;
     do {
         offset = hm->offsets[hash++];
-    } while(offset < MAX_OFFSET || hash != orig_hash);
+    } while(offset > MAX_OFFSET && hash != orig_hash);
 
     if (hash == orig_hash) {
         return res;
@@ -137,15 +136,23 @@ static Result hashmap8_remove(Map* map, Slice key) {
 
     do {
         struct keyval_pair_s kvp;
+        Slice kvp_s;
         res = INDEXING_GET(&hm->data, offset);
+        kvp_s = res.data;
         if (res.status != ERROR_OK) {
             res.data.length = 0;
             res.data.data = 0;
             return res;
         }
+        kvp = *((struct keyval_pair_s *)kvp_s.data);
 
-        kvp = RESULT_UNWRAP(res, struct keyval_pair_s);
         if (slice_cmp(kvp.key, key) == 0) {
+            hm->offsets[offset] = ITEM_REMOVED;
+
+            Slice s = { sizeof(unsigned int), &offset };
+            LINEAR_PUSH(&hm->removals, s);
+
+            res.status = ERROR_OK;
             res.data = kvp.value;
             return res;
         }
@@ -163,17 +170,23 @@ Result new_hashmap8(Allocator* allocator) {
     BASE_ERROR_RESULT(res);
 
     res = new_array_list(allocator, sizeof(struct keyval_pair_s), MAX_OFFSET + 1);
+    Slice data_s = res.data;
     if (res.status != ERROR_OK) {
         return res;
     }
-    hm.data = RESULT_UNWRAP(res, ArrayList);
+    hm.data = *((ArrayList*)data_s.data);
+
+    for (int index = 0; index <= MAX_OFFSET; index++) {
+        hm.offsets[index] = SLOT_EMPTY;
+    }
 
     res = new_stack_collection(allocator, sizeof(unsigned int), MAX_OFFSET + 1);
+    Slice rem_s = res.data;
     if (res.status != ERROR_OK) {
         deinit_array_list(&hm.data);
         return res;
     }
-    hm.removals = RESULT_UNWRAP(res, StackCollection);
+    hm.removals = *((StackCollection*)rem_s.data);
 
     hm.hash = hashmap8_hash;
     hm.outside_functions.add = hashmap8_add;
