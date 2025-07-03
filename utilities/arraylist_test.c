@@ -395,13 +395,53 @@ TestResult *array_list_replace(TestResult *result) {
     s.data = &int3;
 
     if (INDEXING_REPLACE(&al, s, 0).status != ERROR_OK) {
-        MSG_PRINT(result, " Unable to do replacement");
+        MSG_PRINT(result, " Unable to do first replacement");
         deinit_array_list(&al);
         return result;
     }
 
+		if (al.item_count != 2) {
+			MSG_PRINT(result, " Item count incorrect after 1 replace");
+			deinit_array_list(&al);
+			return result;
+		}
 
+		if (RESULT_UNWRAP(INDEXING_GET(&al, 0), int) != 3) {
+			MSG_PRINT(result, " Index 0 has incorrect value after 1 replace");
+			deinit_array_list(&al);
+			return result;
+		}
 
-    // TODO: finish this test
+		if (RESULT_UNWRAP(INDEXING_GET(&al, 1), int) != 2) {
+			MSG_PRINT(result, " Index 1 has incorrect value after 1 replace");
+			deinit_array_list(&al);
+			return result;
+		}
+
+		if (INDEXING_REPLACE(&al, s, 1).status != ERROR_OK) {
+			MSG_PRINT(result, " Unable to do second replacement");
+			deinit_array_list(&al);
+			return result;
+		}
+
+		if (al.item_count != 2) {
+			MSG_PRINT(result, " Item count incorrect after 2 replaces");
+			deinit_array_list(&al);
+			return result;
+		}
+
+		if (RESULT_UNWRAP(INDEXING_GET(&al, 0), int) != 3) {
+			MSG_PRINT(result, " Index 0 has incorrect value after 2 replaces");
+			deinit_array_list(&al);
+			return result;
+		}
+
+		if (RESULT_UNWRAP(INDEXING_GET(&al, 1), int) != 3) {
+			MSG_PRINT(result, " Index 1 has incorrect value after 2 replaces");
+			deinit_array_list(&al);
+			return result;
+		}
+
+		result->status = TEST_PASS;
     return result;
 }
