@@ -43,12 +43,9 @@ struct map_s {
 	Result (*remove)(Map*, Slice);
 };
 
-typedef struct hashmap8_s Hashmap8;
-
 #define MAP_ADD(map, key, value) (((Map*)map)->add((Map*)map, key, value))
 #define MAP_GET(map, key) (((Map*)map)->get((Map*)map, key))
 #define MAP_REMOVE(map, key) (((Map*)map)->remove((Map*)map, key))
-
 
 typedef struct linear_s Linear;
 struct linear_s {
@@ -60,11 +57,19 @@ struct linear_s {
 #define LINEAR_POP(collection) (((Linear*)collection)->pop((Linear*)collection))
 
 typedef struct stack_collection_s StackCollection;
-Result new_stack_collection(Allocator*, unsigned int, unsigned int);
+struct stack_collection_s {
+	Linear outside_functions;
+	Allocator *allocator;
+	unsigned int item_size;
+	unsigned int item_count;
+	Slice buffer;
+};
+Result new_stack_collection(Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_stack_collection(StackCollection *stack);
 
 typedef struct queue_collection_s QueueCollection;
-Result new_queue_collection(Allocator*, unsigned int, unsigned int);
+#include "utilities/queue.h"
+Result new_queue_collection(Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_queue_collection(QueueCollection*);
 
 typedef struct indexing_s Indexing;
@@ -86,9 +91,17 @@ struct indexing_s {
 #define INDEXING_REPLACE(collection, ptr, index) (((Indexing*)collection)->replace((Indexing*)collection, ptr, index))
 
 typedef struct array_list_s ArrayList;
-Result new_array_list(Allocator*, unsigned int, unsigned int);
+struct array_list_s {
+	Indexing outside_functions;
+	Allocator* allocator;
+	Slice buffer;
+	unsigned int item_size;
+	unsigned int item_count;
+};
+Result new_array_list(Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_array_list(ArrayList*);
 
-#include "utilities/arraylist.h"
-#include "utilities/queue.h"
-#include "utilities/stack.h"
+typedef struct hashmap8_s Hashmap8;
+#include "utilities/hash.h"
+Result new_hashmap8(Allocator*);
+Result deinit_hashmap8(Hashmap8*);

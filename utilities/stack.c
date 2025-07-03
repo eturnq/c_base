@@ -1,5 +1,4 @@
-#include "stack.h"
-#include "../memory.h"
+#include "../utilities.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -62,7 +61,7 @@ Result new_stack_collection(Allocator* allocator, unsigned int item_size, unsign
 	static StackCollection stack;
 	Result res;
 	BASE_ERROR_RESULT(res);
-	
+
 	if (allocator == 0 || item_size == 0 || initial_length == 0) {
 		return res;
 	}

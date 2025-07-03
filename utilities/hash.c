@@ -1,4 +1,4 @@
-#include "../utilities.h"
+#include "hash.h"
 
 uint8_t hash8_slice(Slice text) {
 	uint8_t hash = 0;
@@ -14,14 +14,6 @@ uint8_t hash8_slice(Slice text) {
 struct keyval_pair_s {
     Slice key;
     Slice value;
-};
-
-struct hashmap8_s {
-	Map outside_functions;
-	ArrayList data;
-	StackCollection removals;
-	Slice (*hash)(Hashmap8 *, Slice);
-	unsigned int offsets[256];
 };
 
 static Slice hashmap8_hash(Hashmap8 *map, Slice text) {
@@ -47,7 +39,7 @@ static Result hashmap8_add(Map* map, Slice key, Slice value) {
 	unsigned int offset;
 	do {
 	    offset = hashmap->offsets[hash++];
-	} while(offset < 256 && hash != orig_hash);
+	} while(offset <= MAX_OFFSET && hash != orig_hash);
 
 	if (hash == orig_hash) {
 	    return retval;
@@ -94,7 +86,7 @@ static Result hashmap8_get(Map* map, Slice key) {
     uint8_t hash = orig_hash;
     do {
         offset = hm->offsets[hash++];
-    } while (offset > 255 || hash != orig_hash);
+    } while (offset > MAX_OFFSET || hash != orig_hash);
 
     if (hash == orig_hash) {
         return res;
@@ -123,8 +115,66 @@ static Result hashmap8_get(Map* map, Slice key) {
 
 static Result hashmap8_remove(Map* map, Slice key) {
     Result res;
+    Hashmap8 *hm;
+    uint8_t hash, orig_hash;
+    unsigned int offset;
+    BASE_ERROR_RESULT(res);
+
+    if (map == 0 || key.length == 0 || key.data == 0) {
+        return res;
+    }
+
+    hm = (Hashmap8*) map;
+    if (hm->data.item_count < 1) {
+        return res;
+    }
+
+    orig_hash = *((uint8_t*)hm->hash(hm, key).data);
+    hash = orig_hash;
+    do {
+        offset = hm->offsets[hash++];
+    } while(offset < MAX_OFFSET || hash != orig_hash);
+
+    if (hash == orig_hash) {
+        return res;
+    }
+
+    do {
+        struct keyval_pair_s kvp;
+        res = INDEXING_GET(&hm->data, offset);
+        if (res.status != ERROR_OK) {
+            res.data.length = 0;
+            res.data.data = 0;
+            return res;
+        }
+
+        kvp = RESULT_UNWRAP(res, struct keyval_pair_s);
+        if (slice_cmp(kvp.key, key) == 0) {
+            res.data = kvp.value;
+            return res;
+        }
+        offset = hm->offsets[hash++];
+    } while (hash != orig_hash);
+
+    res.data.length = 0;
+    res.data.data = 0;
+    return res;
+}
+
+Result new_hashmap8(Allocator* allocator) {
+    Result res;
     BASE_ERROR_RESULT(res);
 
     // TODO: finish this function
+
+    return res;
+}
+
+Result deinit_hashmap8(Hashmap8* hm) {
+    Result res;
+    BASE_ERROR_RESULT(res);
+
+    // TODO: finish this function
+
     return res;
 }
