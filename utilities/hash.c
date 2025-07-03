@@ -1,4 +1,5 @@
 #include "hash.h"
+#include <stdio.h>
 
 uint8_t hash8_slice(Slice text) {
 	uint8_t hash = 0;
@@ -10,11 +11,6 @@ uint8_t hash8_slice(Slice text) {
 
 	return hash;
 }
-
-struct keyval_pair_s {
-    Slice key;
-    Slice value;
-};
 
 static Slice hashmap8_hash(Slice text) {
     uint8_t hash = hash8_slice(text);
