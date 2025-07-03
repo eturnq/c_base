@@ -10,6 +10,6 @@ struct hashmap8_s {
 	Map outside_functions;
 	ArrayList data;
 	StackCollection removals;
-	Slice (*hash)(Hashmap8 *, Slice);
+	Slice (*hash)(Slice);
 	unsigned int offsets[MAX_OFFSET + 1];
 };

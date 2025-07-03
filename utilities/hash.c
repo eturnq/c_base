@@ -16,7 +16,7 @@ struct keyval_pair_s {
     Slice value;
 };
 
-static Slice hashmap8_hash(Hashmap8 *map, Slice text) {
+static Slice hashmap8_hash(Slice text) {
     uint8_t hash = hash8_slice(text);
     Slice s = { sizeof(uint8_t), &hash };
     return s;
@@ -34,7 +34,7 @@ static Result hashmap8_add(Map* map, Slice key, Slice value) {
 
 	Hashmap8 *hashmap = (Hashmap8 *) map;
 
-	uint8_t orig_hash = *((uint8_t*)hashmap->hash(hashmap, key).data);
+	uint8_t orig_hash = *((uint8_t*)hashmap->hash(key).data);
 	uint8_t hash = orig_hash;
 	unsigned int offset;
 	do {
@@ -82,7 +82,7 @@ static Result hashmap8_get(Map* map, Slice key) {
         return res;
     }
 
-    uint8_t orig_hash = *((uint8_t*)hm->hash(hm, key).data);
+    uint8_t orig_hash = *((uint8_t*)hm->hash(key).data);
     uint8_t hash = orig_hash;
     do {
         offset = hm->offsets[hash++];
@@ -129,7 +129,7 @@ static Result hashmap8_remove(Map* map, Slice key) {
         return res;
     }
 
-    orig_hash = *((uint8_t*)hm->hash(hm, key).data);
+    orig_hash = *((uint8_t*)hm->hash(key).data);
     hash = orig_hash;
     do {
         offset = hm->offsets[hash++];
@@ -163,9 +163,30 @@ static Result hashmap8_remove(Map* map, Slice key) {
 
 Result new_hashmap8(Allocator* allocator) {
     Result res;
+    Hashmap8 hm;
     BASE_ERROR_RESULT(res);
 
-    // TODO: finish this function
+    res = new_array_list(allocator, sizeof(struct keyval_pair_s), MAX_OFFSET + 1);
+    if (res.status != ERROR_OK) {
+        return res;
+    }
+    hm.data = RESULT_UNWRAP(res, ArrayList);
+
+    res = new_stack_collection(allocator, sizeof(unsigned int), MAX_OFFSET + 1);
+    if (res.status != ERROR_OK) {
+        deinit_array_list(&hm.data);
+        return res;
+    }
+    hm.removals = RESULT_UNWRAP(res, StackCollection);
+
+    hm.hash = hashmap8_hash;
+    hm.outside_functions.add = hashmap8_add;
+    hm.outside_functions.get = hashmap8_get;
+    hm.outside_functions.remove = hashmap8_remove;
+
+    res.status = ERROR_OK;
+    res.data.length = sizeof(Hashmap8);
+    res.data.data = &hm;
 
     return res;
 }
@@ -174,7 +195,13 @@ Result deinit_hashmap8(Hashmap8* hm) {
     Result res;
     BASE_ERROR_RESULT(res);
 
-    // TODO: finish this function
+    if (hm == 0) {
+        return res;
+    }
 
+    deinit_array_list(&hm->data);
+    deinit_stack_collection(&hm->removals);
+
+    res.status = ERROR_OK;
     return res;
 }
