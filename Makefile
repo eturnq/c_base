@@ -1,7 +1,9 @@
 LIB=base.a
 MEM_OBJS=memory/heap.o
+MEM_TEST_OBJS=$(MEM_OBJS:.o=_test.o)
 UTIL_OBJS=utilities/arraylist.o utilities/hash.o utilities/queue.o utilities/slice.o utilities/stack.o
-TEST_OBJS=memory/heap_test.o utilities/arraylist_test.o utilities/queue_test.o utilities/slice_test.o utilities/stack_test.o
+UTIL_TEST_OBJS=$(UTIL_OBJS:.o=_test.o)
+TEST_OBJS=$(MEM_TEST_OBJS) $(UTIL_TEST_OBJS)
 OBJS=$(MEM_OBJS) $(UTIL_OBJS)
 CFLAGS=-Wall -Wextra
 LDFLAGS=-L. -l:$(LIB)

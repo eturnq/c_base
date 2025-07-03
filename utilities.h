@@ -2,6 +2,7 @@
 #include "memory.h"
 
 #include <stdint.h>
+#include <string.h>
 
 typedef struct allocator_s Allocator;
 
@@ -11,6 +12,8 @@ typedef struct slice_s {
 } Slice;
 
 #define IS_NULL_SLICE(slice) (slice.length == 0 || slice.data == 0)
+#define STR_SLICE(str) {strlen(str) - 1, str }
+#define STR(slice) ((char*)slice.data)
 
 uint8_t hash8_slice(Slice);
 

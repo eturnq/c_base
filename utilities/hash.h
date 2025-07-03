@@ -6,6 +6,11 @@
 #define SLOT_EMPTY 256
 #define ITEM_REMOVED 257
 
+struct keyval_pair_s {
+    Slice key;
+    Slice value;
+};
+
 struct hashmap8_s {
 	Map outside_functions;
 	ArrayList data;
