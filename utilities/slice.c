@@ -3,6 +3,11 @@
 
 int slice_cmp(Slice a, Slice b) {
 	unsigned int max_length;
+
+	if (a.length == b.length && a.data == b.data) {
+		return 0;
+	}
+
 	if (a.length < b.length) {
 		max_length = a.length;
 	} else {
