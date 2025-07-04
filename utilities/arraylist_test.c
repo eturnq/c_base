@@ -2,16 +2,15 @@
 #include "../utilities.h"
 
 TestResult *array_list_init_deinit(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_init_deinit]");
 
     Allocator *heap = get_raw_heap_allocator();
-    Result res = new_array_list(heap, sizeof(int), 16);
+    Result res = new_array_list(&al, heap, sizeof(int), 16);
     if (res.status != ERROR_OK) {
         MSG_PRINT(result, " Unable to create new ArrayList");
         return result;
     }
-
-    ArrayList al = *((ArrayList*)res.data.data);
 
     res = deinit_array_list(&al);
     if (res.status != ERROR_OK) {
@@ -24,10 +23,11 @@ TestResult *array_list_init_deinit(TestResult *result) {
 }
 
 TestResult *array_list_push(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_push]");
 
     Allocator *heap = get_raw_heap_allocator();
-    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
 
     int int1 = 1;
     int int2 = 2;
@@ -87,11 +87,11 @@ TestResult *array_list_push(TestResult *result) {
 }
 
 TestResult *array_list_pop(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_push_pop]");
 
     Allocator *heap = get_raw_heap_allocator();
-    Result res = new_array_list(heap, sizeof(int), 16);
-    ArrayList al = *((ArrayList*)res.data.data);
+    Result res = new_array_list(&al, heap, sizeof(int), 16);
     int int1 = 1;
     int int2 = 2;
     Slice s1 = { sizeof(int), &int1 };
@@ -135,11 +135,12 @@ TestResult *array_list_pop(TestResult *result) {
 }
 
 TestResult *array_list_get(TestResult *result) {
+    ArrayList al;
+    Result res;
     INIT_RESULT(result, "[array_list_get]");
 
     Allocator *heap = get_raw_heap_allocator();
-    Result res = new_array_list(heap, sizeof(int), 16);
-    ArrayList al = RESULT_UNWRAP(res, ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
     int int1 = 1;
     int int2 = 2;
     Slice s1 = { sizeof(int), &int1 };
@@ -189,11 +190,12 @@ TestResult *array_list_get(TestResult *result) {
 }
 
 TestResult *array_list_index_of(TestResult *result) {
+    ArrayList al;
+    Result res;
     INIT_RESULT(result, "[array_list_index_of]");
 
     Allocator *heap = get_raw_heap_allocator();
-    Result res = new_array_list(heap, sizeof(int), 16);
-    ArrayList al = RESULT_UNWRAP(res, ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
 
     int int1 = 1;
     int int2 = 2;
@@ -243,12 +245,14 @@ TestResult *array_list_index_of(TestResult *result) {
 }
 
 TestResult *array_list_remove(TestResult *result) {
+    ArrayList al;
+    Result res;
     INIT_RESULT(result, "[array_list_remove]");
 
     Allocator *heap = get_raw_heap_allocator();
-    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
 
-    Result res = INDEXING_REMOVE(&al, 0);
+    res = INDEXING_REMOVE(&al, 0);
     if (res.status == ERROR_OK) {
         MSG_PRINT(result, " remove returned a valid result when given an invalid index");
         deinit_array_list(&al);
@@ -277,10 +281,11 @@ TestResult *array_list_remove(TestResult *result) {
 }
 
 TestResult *array_list_insert(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_insert]");
 
     Allocator *heap = get_raw_heap_allocator();
-    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
@@ -328,10 +333,11 @@ TestResult *array_list_insert(TestResult *result) {
 }
 
 TestResult *array_list_swap(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_swap]");
 
     Allocator *heap = get_raw_heap_allocator();
-    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
 
     int int1 = 1;
     int int2 = 2;
@@ -379,10 +385,11 @@ TestResult *array_list_swap(TestResult *result) {
 }
 
 TestResult *array_list_replace(TestResult *result) {
+    ArrayList al;
     INIT_RESULT(result, "[array_list_replace]");
 
     Allocator *heap = get_raw_heap_allocator();
-    ArrayList al = RESULT_UNWRAP(new_array_list(heap, sizeof(int), 16), ArrayList);
+    new_array_list(&al, heap, sizeof(int), 16);
 
     int int1 = 1;
     int int2 = 2;

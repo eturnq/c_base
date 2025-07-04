@@ -3,19 +3,18 @@
 
 TestResult *hashmap_open_init_deinit(TestResult *result) {
     Allocator *heap;
-    Slice hm_s;
+    HashmapOpen hm;
     Result res;
     INIT_RESULT(result, "[hashmap_open_init_deinit]");
 
     heap = get_raw_heap_allocator();
-    res = new_hashmap_open(heap, 128);
-    hm_s = res.data;
+    res = new_hashmap_open(&hm, heap, 128);
     if (res.status != ERROR_OK) {
         MSG_PRINT(result, " Unable to initialize");
         return result;
     }
 
-    res = deinit_hashmap_open(hm_s.data);
+    res = deinit_hashmap_open(&hm);
     if (res.status != ERROR_OK) {
         MSG_PRINT(result, " Unable to deinitialize. Possible memory leak!");
         return result;
@@ -36,7 +35,7 @@ TestResult *hashmap_open_add_get(TestResult *result) {
     INIT_RESULT(result, "[hashmap_open_add_get]");
 
     heap = get_raw_heap_allocator();
-    hm = RESULT_UNWRAP(new_hashmap_open(heap, 32), HashmapOpen);
+    new_hashmap_open(&hm, heap, 32);
 
     key_bytes.data = "int0int1int2int3int4int5int6int7int7int9intAintBintCintDintEintF";
     key_bytes.length = sizeof(unsigned char) * 16 * 4;

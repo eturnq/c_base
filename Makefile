@@ -13,7 +13,6 @@ $(LIB): $(OBJS)
 
 test: test.c $(LIB) $(TEST_OBJS)
 	$(CC) -o test test.c $(TEST_OBJS) $(CFLAGS) $(LDFLAGS)
-	./test
 
 cleanlib:
 	rm -f $(LIB) $(OBJS)

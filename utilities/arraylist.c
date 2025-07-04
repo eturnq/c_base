@@ -301,37 +301,36 @@ static Result array_list_pop(Linear *linear) {
     return res;
 }
 
-Result new_array_list(Allocator* allocator, unsigned int item_size, unsigned int max_count) {
+Result new_array_list(ArrayList *al, Allocator* allocator, unsigned int item_size, unsigned int max_count) {
 	Result res, alloc_res;
-	ArrayList al;
 	BASE_ERROR_RESULT(res);
 
-	if (allocator == 0 || item_size == 0 || max_count == 0) {
+	if (al == 0 || allocator == 0 || item_size == 0 || max_count == 0) {
 		return res;
 	}
 
-	al.allocator = allocator;
-	al.item_size = item_size;
-	al.item_count = 0;
+	al->allocator = allocator;
+	al->item_size = item_size;
+	al->item_count = 0;
 	alloc_res = ALLOC(allocator, item_size * max_count);
 	if (alloc_res.status != ERROR_OK) {
 		return res;
 	}
-	al.buffer = alloc_res.data;
-	memset(al.buffer.data, 0, al.buffer.length);
+	al->buffer = alloc_res.data;
+	memset(al->buffer.data, 0, al->buffer.length);
 
-	al.outside_functions.get = array_list_get;
-	al.outside_functions.index_of = array_list_index_of;
-	al.outside_functions.remove = array_list_remove;
-	al.outside_functions.insert = array_list_insert;
-	al.outside_functions.swap = array_list_swap;
-	al.outside_functions.replace = array_list_replace;
-	al.outside_functions.linear_functions.push = array_list_push;
-	al.outside_functions.linear_functions.pop = array_list_pop;
+	al->outside_functions.get = array_list_get;
+	al->outside_functions.index_of = array_list_index_of;
+	al->outside_functions.remove = array_list_remove;
+	al->outside_functions.insert = array_list_insert;
+	al->outside_functions.swap = array_list_swap;
+	al->outside_functions.replace = array_list_replace;
+	al->outside_functions.linear_functions.push = array_list_push;
+	al->outside_functions.linear_functions.pop = array_list_pop;
 
 	res.status = ERROR_OK;
 	res.data.length = sizeof(ArrayList);
-	res.data.data = &al;
+	res.data.data = al;
 	return res;
 }
 
@@ -339,13 +338,18 @@ Result deinit_array_list(ArrayList* al) {
 	Result res, free_res;
 	BASE_ERROR_RESULT(res);
 
+	if (al == 0) {
+	    return res;
+	}
+
+	if (al->allocator == 0 || al->buffer.length == 0 || al->buffer.data == 0) {
+	    return res;
+	}
+
 	free_res = FREE(al->allocator, al->buffer);
 	if (free_res.status != ERROR_OK) {
 		return res;
 	}
-
-	al->item_count = 0;
-	al->item_size = 0;
 
 	res.status = ERROR_OK;
 	return res;

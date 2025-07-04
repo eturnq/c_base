@@ -105,12 +105,12 @@ struct array_list_s {
 	unsigned int item_size;
 	unsigned int item_count;
 };
-Result new_array_list(Allocator*, unsigned int item_size, unsigned int max_count);
+Result new_array_list(ArrayList *, Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_array_list(ArrayList*);
 
 typedef struct hashmap_open_s HashmapOpen;
 #include "utilities/hash.h"
-Result new_hashmap_open(Allocator*, unsigned int max_size);
+Result new_hashmap_open(HashmapOpen *, Allocator*, unsigned int max_size);
 Result deinit_hashmap_open(HashmapOpen*);
 
 /*typedef struct hashmap8_s Hashmap8;

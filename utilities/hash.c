@@ -60,49 +60,47 @@ static Result hashmap_open_remove(Map* map, Slice key) {
     return res;
 }
 
-Result new_hashmap_open(Allocator* allocator, unsigned int max_size) {
+Result new_hashmap_open(HashmapOpen *hm, Allocator* allocator, unsigned int max_size) {
     Result res;
-    HashmapOpen hm;
     BASE_ERROR_RESULT(res);
 
-    res = new_array_list(allocator, sizeof(struct keyval_pair_s), max_size > 8 ? 8 : max_size);
-    Slice data_s = res.data;
-    if (res.status != ERROR_OK) {
+    if (hm == 0) {
         return res;
     }
-    hm.data = *((ArrayList*)data_s.data);
 
-    res = new_array_list(allocator, sizeof(unsigned int), max_size);
-    Slice offsets_s = res.data;
+    res = new_array_list(&hm->data, allocator, sizeof(struct keyval_pair_s), max_size > 8 ? 8 : max_size);
     if (res.status != ERROR_OK) {
-        deinit_array_list(&hm.data);
         return res;
     }
-    hm.offsets = *((ArrayList*)offsets_s.data);
-    hm.offsets.buffer.length = max_size * sizeof(unsigned int);
+
+    res = new_array_list(&hm->offsets, allocator, sizeof(unsigned int), max_size);
+    if (res.status != ERROR_OK) {
+        deinit_array_list(&hm->data);
+        return res;
+    }
+    hm->offsets.buffer.length = max_size * sizeof(unsigned int);
     for (unsigned int index = 0; index < max_size; index++) {
-        ((int*)hm.offsets.buffer.data)[index] = max_size;
+        ((int*)hm->offsets.buffer.data)[index] = max_size;
     }
 
     res = new_stack_collection(allocator, sizeof(unsigned int), max_size > 8 ? 8 : max_size);
     Slice rem_s = res.data;
     if (res.status != ERROR_OK) {
-        deinit_array_list(&hm.data);
-        deinit_array_list(&hm.offsets);
+        deinit_array_list(&hm->data);
+        deinit_array_list(&hm->offsets);
         return res;
     }
-    hm.removals = *((StackCollection*)rem_s.data);
+    hm->removals = *((StackCollection*)rem_s.data);
 
-    hm.outside_functions.hash = hashmap_open_hash;
-    hm.outside_functions.length = hashmap_open_length;
-    hm.outside_functions.add = hashmap_open_add;
-    hm.outside_functions.get = hashmap_open_get;
-    hm.outside_functions.remove = hashmap_open_remove;
+    hm->outside_functions.hash = hashmap_open_hash;
+    hm->outside_functions.length = hashmap_open_length;
+    hm->outside_functions.add = hashmap_open_add;
+    hm->outside_functions.get = hashmap_open_get;
+    hm->outside_functions.remove = hashmap_open_remove;
 
     res.status = ERROR_OK;
     return res;
 }
-
 Result deinit_hashmap_open(HashmapOpen *hm) {
     Result res;
     BASE_ERROR_RESULT(res);
