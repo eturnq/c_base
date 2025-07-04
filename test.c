@@ -1,7 +1,7 @@
 #include "testing/test.h"
 #include "memory/heap_test.h"
 #include "utilities/arraylist_test.h"
-//#include "utilities/hash_test.h"
+#include "utilities/hash_test.h"
 #include "utilities/queue_test.h"
 #include "utilities/slice_test.h"
 #include "utilities/stack_test.h"
@@ -12,7 +12,7 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 21
+#define TEST_COUNT 22
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -39,6 +39,7 @@ Test tests[TEST_COUNT] = {
 	//hashmap8_add,
 	//hashmap8_get,
 	//hashmap8_remove,
+	hashmap_open_init_deinit,
 };
 
 int main() {
@@ -53,6 +54,9 @@ int main() {
 			fprintf(stderr, "%s\n", out_buffer);
 			return -1;
 		}
+		strcpy(out_buffer, "[SUCCESS] ");
+		strncpy(out_buffer + strlen(out_buffer), result.message, TEST_MESSAGE_SIZE);
+		printf("%s\n", out_buffer);
 	}
 	printf("All tests passed!\n");
 

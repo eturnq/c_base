@@ -41,11 +41,15 @@ Result slice_copy(Slice a, Slice b);
 
 typedef struct map_s Map;
 struct map_s {
-	Result (*add)(Map*, Slice, Slice);
-	Result (*get)(Map*, Slice);
-	Result (*remove)(Map*, Slice);
+    unsigned int (*length)(Map*);
+    unsigned int (*hash)(Map*, Slice key);
+	Result (*add)(Map*, Slice key, Slice value);
+	Result (*get)(Map*, Slice key);
+	Result (*remove)(Map*, Slice key);
 };
 
+#define MAP_LENGTH(map) (((Map*)map)->length((Map*)map))
+#define MAP_HASH(map, key) (((Map*)map)->swap((Map*)map, key))
 #define MAP_ADD(map, key, value) (((Map*)map)->add((Map*)map, key, value))
 #define MAP_GET(map, key) (((Map*)map)->get((Map*)map, key))
 #define MAP_REMOVE(map, key) (((Map*)map)->remove((Map*)map, key))
@@ -103,6 +107,11 @@ struct array_list_s {
 };
 Result new_array_list(Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_array_list(ArrayList*);
+
+typedef struct hashmap_open_s HashmapOpen;
+#include "utilities/hash.h"
+Result new_hashmap_open(Allocator*, unsigned int max_size);
+Result deinit_hashmap_open(HashmapOpen*);
 
 /*typedef struct hashmap8_s Hashmap8;
 #include "utilities/hash.h"
