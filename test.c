@@ -1,7 +1,7 @@
 #include "testing/test.h"
 #include "memory/heap_test.h"
 #include "utilities/arraylist_test.h"
-#include "utilities/hash_test.h"
+//#include "utilities/hash_test.h"
 #include "utilities/queue_test.h"
 #include "utilities/slice_test.h"
 #include "utilities/stack_test.h"

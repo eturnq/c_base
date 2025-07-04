@@ -1,8 +1,8 @@
 #include "hash_test.h"
-#include "hash.h"
-#include "../utilities.h"
+//#include "hash.h"
+//#include "../utilities.h"
 
-TestResult *hashmap8_init_deinit(TestResult *result) {
+/*TestResult *hashmap8_init_deinit(TestResult *result) {
     Result res;
     Allocator *heap;
     INIT_RESULT(result, "[hashmap8_init_deinit]");
@@ -247,4 +247,4 @@ TestResult *hashmap8_remove(TestResult *result) {
     // TODO: finish this test
     MSG_PRINT(result, " Unimplemented");
     return result;
-}
+    }*/

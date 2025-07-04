@@ -12,7 +12,7 @@ uint8_t hash8_slice(Slice text) {
 	return hash;
 }
 
-static Slice hashmap8_hash(Slice text) {
+/*static Slice hashmap8_hash(Slice text) {
     uint8_t hash = hash8_slice(text);
     Slice s = { sizeof(uint8_t), &hash };
     return s;
@@ -214,4 +214,4 @@ Result deinit_hashmap8(Hashmap8* hm) {
 
     res.status = ERROR_OK;
     return res;
-}
+    }*/
