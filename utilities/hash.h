@@ -7,13 +7,6 @@ struct keyval_pair_s {
     Slice value;
 };
 
-struct hashmap_open_s {
-    Map outside_functions;
-    ArrayList offsets;
-    ArrayList data;
-    StackCollection removals;
-};
-
 /*#define MAX_OFFSET 255
 #define SLOT_EMPTY 256
 #define ITEM_REMOVED 257

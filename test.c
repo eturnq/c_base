@@ -12,7 +12,7 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 22
+#define TEST_COUNT 21
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -39,7 +39,6 @@ Test tests[TEST_COUNT] = {
 	//hashmap8_add,
 	//hashmap8_get,
 	//hashmap8_remove,
-	hashmap_open_init_deinit,
 };
 
 int main() {
