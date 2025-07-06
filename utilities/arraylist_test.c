@@ -1,4 +1,5 @@
 #include "arraylist_test.h"
+#include "../memory.h"
 #include "../utilities.h"
 
 TestResult *array_list_init_deinit(TestResult *result) {
@@ -32,7 +33,7 @@ TestResult *array_list_push(TestResult *result) {
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
-    Slice s = { sizeof(int), &int1 };
+    Slice s = { &int1, sizeof(int) };
 
     if (LINEAR_PUSH(&al, s).status != ERROR_OK) {
         MSG_PRINT(result, " Unable to push value 1");
@@ -94,8 +95,8 @@ TestResult *array_list_pop(TestResult *result) {
     Result res = new_array_list(&al, heap, sizeof(int), 16);
     int int1 = 1;
     int int2 = 2;
-    Slice s1 = { sizeof(int), &int1 };
-    Slice s2 = { sizeof(int), &int2 };
+    Slice s1 = { &int1, sizeof(int) };
+    Slice s2 = { &int2, sizeof(int) };
 
     res = LINEAR_PUSH(&al, s1);
     res = LINEAR_PUSH(&al, s2);
@@ -143,8 +144,8 @@ TestResult *array_list_get(TestResult *result) {
     new_array_list(&al, heap, sizeof(int), 16);
     int int1 = 1;
     int int2 = 2;
-    Slice s1 = { sizeof(int), &int1 };
-    Slice s2 = { sizeof(int), &int2 };
+    Slice s1 = { &int1, sizeof(int) };
+    Slice s2 = { &int2, sizeof(int) };
 
     LINEAR_PUSH(&al, s1);
     LINEAR_PUSH(&al, s2);
@@ -200,9 +201,9 @@ TestResult *array_list_index_of(TestResult *result) {
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
-    Slice s1 = { sizeof(int), &int1 };
-    Slice s2 = { sizeof(int), &int2 };
-    Slice s3 = { sizeof(int), &int3 };
+    Slice s1 = { &int1, sizeof(int) };
+    Slice s2 = { &int2, sizeof(int) };
+    Slice s3 = { &int3, sizeof(int) };
 
     LINEAR_PUSH(&al, s1);
     LINEAR_PUSH(&al, s2);
@@ -260,7 +261,7 @@ TestResult *array_list_remove(TestResult *result) {
     }
 
     int int1 = 1;
-    Slice s1 = { sizeof(int), &int1 };
+    Slice s1 = { &int1, sizeof(int) };
     LINEAR_PUSH(&al, s1);
     res = INDEXING_REMOVE(&al, 0);
     if (res.status != ERROR_OK) {
@@ -289,7 +290,7 @@ TestResult *array_list_insert(TestResult *result) {
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
-    Slice s = { sizeof(int), &int1 };
+    Slice s = { &int1, sizeof(int) };
     LINEAR_PUSH(&al, s);
     s.data = &int2;
     LINEAR_PUSH(&al, s);
@@ -342,7 +343,7 @@ TestResult *array_list_swap(TestResult *result) {
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
-    Slice s = { sizeof(int), &int1 };
+    Slice s = { &int1, sizeof(int) };
     LINEAR_PUSH(&al, s);
     s.data = &int2;
     LINEAR_PUSH(&al, s);
@@ -394,7 +395,7 @@ TestResult *array_list_replace(TestResult *result) {
     int int1 = 1;
     int int2 = 2;
     int int3 = 3;
-    Slice s = { sizeof(int), &int1 };
+    Slice s = { &int1, sizeof(int) };
 
     LINEAR_PUSH(&al, s);
     s.data = &int2;

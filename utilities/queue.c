@@ -1,7 +1,6 @@
 #include "queue.h"
 #include "../memory.h"
 
-#include <stdio.h>
 #include <stdint.h>
 #include <string.h>
 
@@ -28,7 +27,7 @@ Result queue_push(Linear* linear, Slice item) {
 		queue->buffer = realloc_res.data;
 		queue->head = (queue->buffer.length - relocation_length) / queue->item_size;
 		memcpy(
-			(uint8_t*)queue->buffer.data + (queue->buffer.length - relocation_length), 
+			(uint8_t*)queue->buffer.data + (queue->buffer.length - relocation_length),
 			(uint8_t*)queue->buffer.data + relocation_start,
 			relocation_length
 		);
@@ -72,29 +71,28 @@ Result queue_pop(Linear *linear) {
 	return res;
 }
 
-Result new_queue_collection(Allocator* allocator, unsigned int item_size, unsigned int max_count) {
+Result new_queue_collection(QueueCollection* queue, Allocator* allocator, unsigned int item_size, unsigned int max_count) {
 	Result res;
 	BASE_ERROR_RESULT(res);
-	static QueueCollection queue;
 
 	if (allocator == 0 || item_size == 0 || max_count == 0) {
 		return res;
 	}
 
-	queue.allocator = allocator;
-	queue.item_size = item_size;
-	queue.item_count = 0;
-	queue.head = 0;
-	queue.tail = 0;
-	
+	queue->allocator = allocator;
+	queue->item_size = item_size;
+	queue->item_count = 0;
+	queue->head = 0;
+	queue->tail = 0;
+
 	Result buffer_res = ALLOC(allocator, max_count * item_size);
 	if (buffer_res.status != ERROR_OK) {
 		return res;
 	}
 
-	queue.buffer = buffer_res.data;
-	queue.outside_functions.push = queue_push;
-	queue.outside_functions.pop = queue_pop;
+	queue->buffer = buffer_res.data;
+	queue->outside_functions.push = queue_push;
+	queue->outside_functions.pop = queue_pop;
 
 	res.status = ERROR_OK;
 	res.data.length = sizeof(QueueCollection);
@@ -120,6 +118,9 @@ Result deinit_queue_collection(QueueCollection* queue) {
 	queue->tail = 0;
 	queue->item_count = 0;
 	queue->item_size = 0;
+
+	Slice s = { queue, sizeof(QueueCollection) };
+	res.data = s;
 
 	return res;
 }

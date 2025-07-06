@@ -1,3 +1,4 @@
+#include "../memory.h"
 #include "../utilities.h"
 
 #include <stdint.h>
@@ -57,8 +58,7 @@ static Result stack_pop(Linear *collection) {
 	return res;
 }
 
-Result new_stack_collection(Allocator* allocator, unsigned int item_size, unsigned int initial_length) {
-	static StackCollection stack;
+Result new_stack_collection(StackCollection* stack, Allocator* allocator, unsigned int item_size, unsigned int initial_length) {
 	Result res;
 	BASE_ERROR_RESULT(res);
 
@@ -66,19 +66,19 @@ Result new_stack_collection(Allocator* allocator, unsigned int item_size, unsign
 		return res;
 	}
 
-	stack.outside_functions.push = stack_push;
-	stack.outside_functions.pop = stack_pop;
-	stack.allocator = allocator;
-	stack.item_size = item_size;
-	stack.item_count = 0;
+	stack->outside_functions.push = stack_push;
+	stack->outside_functions.pop = stack_pop;
+	stack->allocator = allocator;
+	stack->item_size = item_size;
+	stack->item_count = 0;
 	Result alloc_res = ALLOC(allocator, initial_length * item_size);
 	if (alloc_res.status == ERROR_ERR) {
 		return res;
 	}
-	stack.buffer = alloc_res.data;
+	stack->buffer = alloc_res.data;
 
 	res.data.length = sizeof(StackCollection);
-	res.data.data = &stack;
+	res.data.data = stack;
 	res.status = ERROR_OK;
 
 	return res;

@@ -1,5 +1,4 @@
 #pragma once
-#include "memory.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -7,13 +6,13 @@
 typedef struct allocator_s Allocator;
 
 typedef struct slice_s {
-	unsigned int length;
 	void *data;
+	unsigned int length;
 } Slice;
 
 #define IS_NULL_SLICE(slice) (slice.length == 0 || slice.data == 0)
-#define STR_SLICE(str) {strlen(str), str }
-#define STR(slice) ((char*)slice.data)
+#define STR_SLICE(str) { str, strlen(str) }
+#define STR(slice) ((char*)slice)
 
 uint8_t hash8_slice(Slice);
 
@@ -71,12 +70,12 @@ struct stack_collection_s {
 	unsigned int item_count;
 	Slice buffer;
 };
-Result new_stack_collection(Allocator*, unsigned int item_size, unsigned int max_count);
+Result new_stack_collection(StackCollection*, Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_stack_collection(StackCollection *stack);
 
 typedef struct queue_collection_s QueueCollection;
 #include "utilities/queue.h"
-Result new_queue_collection(Allocator*, unsigned int item_size, unsigned int max_count);
+Result new_queue_collection(QueueCollection*, Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_queue_collection(QueueCollection*);
 
 typedef struct indexing_s Indexing;

@@ -1,8 +1,10 @@
+#include "../globals.h"
+#include "../memory.h"
 #include "../utilities.h"
 
 #include <string.h>
 
-static Result array_list_get(Indexing* indexing, int index) {
+function Result array_list_get(Indexing* indexing, int index) {
 	Result res;
 	ArrayList *al;
 	unsigned int offset;
@@ -33,7 +35,7 @@ static Result array_list_get(Indexing* indexing, int index) {
 	return res;
 }
 
-static Result array_list_index_of(Indexing* indexing, Slice item) {
+function Result array_list_index_of(Indexing* indexing, Slice item) {
 	Result res;
 	ArrayList *al;
 	unsigned int item_index;
@@ -66,7 +68,7 @@ static Result array_list_index_of(Indexing* indexing, Slice item) {
 	return res;
 }
 
-static Result array_list_remove(Indexing *indexing, int index) {
+function Result array_list_remove(Indexing *indexing, int index) {
 	Result res;
 	ArrayList *al;
 	unsigned int offset;
@@ -97,7 +99,7 @@ static Result array_list_remove(Indexing *indexing, int index) {
 	return res;
 }
 
-static Result array_list_insert(Indexing* indexing, Slice item, int index) {
+function Result array_list_insert(Indexing* indexing, Slice item, int index) {
 	Result res, alloc_res;
 	ArrayList *al;
 	unsigned int offset;
@@ -146,7 +148,7 @@ static Result array_list_insert(Indexing* indexing, Slice item, int index) {
 	return res;
 }
 
-static Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
+function Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	Result res;
 	ArrayList *al;
 	Slice a, b, temp;
@@ -213,7 +215,7 @@ static Result array_list_swap(Indexing *indexing, int index_a, int index_b) {
 	return res;
 }
 
-static Result array_list_replace(Indexing *indexing, Slice item, int index) {
+function Result array_list_replace(Indexing *indexing, Slice item, int index) {
     Result res;
     ArrayList *al;
     Slice dest;
@@ -246,7 +248,7 @@ static Result array_list_replace(Indexing *indexing, Slice item, int index) {
     return res;
 }
 
-static Result array_list_push(Linear *linear, Slice item) {
+function Result array_list_push(Linear *linear, Slice item) {
     Result res;
     ArrayList *al;
     unsigned int offset;
@@ -280,7 +282,7 @@ static Result array_list_push(Linear *linear, Slice item) {
     return res;
 }
 
-static Result array_list_pop(Linear *linear) {
+function Result array_list_pop(Linear *linear) {
     Result res;
     ArrayList *al;
     BASE_ERROR_RESULT(res);

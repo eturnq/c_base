@@ -1,7 +1,6 @@
 #include "testing/test.h"
 #include "memory/heap_test.h"
 #include "utilities/arraylist_test.h"
-#include "utilities/hash_test.h"
 #include "utilities/queue_test.h"
 #include "utilities/slice_test.h"
 #include "utilities/stack_test.h"
@@ -35,10 +34,6 @@ Test tests[TEST_COUNT] = {
 	array_list_insert,
 	array_list_swap,
 	array_list_replace,
-	//hashmap8_init_deinit,
-	//hashmap8_add,
-	//hashmap8_get,
-	//hashmap8_remove,
 };
 
 int main() {

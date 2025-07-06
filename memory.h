@@ -23,4 +23,10 @@ Allocator *get_raw_heap_allocator(void);
 struct heap_allocator_s;
 typedef struct heap_allocator_s HeapAllocator;
 
+struct linear_alloc_s;
+typedef struct linear_alloc_s LinearAllocator;
+Result new_linear_allocator(Allocator*, unsigned int max_size);
+Result deinit_linear_allocator(LinearAllocator*);
+
 #include "memory/heap.h"
+#include "memory/linear_alloc.h"

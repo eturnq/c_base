@@ -6,8 +6,8 @@ TestResult *slice_compare(TestResult *result) {
 
 	int int1 = 1;
 	int int2 = 2;
-	Slice s1 = { sizeof(int), &int1 };
-	Slice s2 = { sizeof(int), &int2 };
+	Slice s1 = { &int1, sizeof(int) };
+	Slice s2 = { &int2, sizeof(int) };
 
 	if (slice_cmp(s1, s1) != 0) {
 		MSG_PRINT(result, " slice_cmp should return 0");
@@ -59,8 +59,8 @@ TestResult *slice_copy_test(TestResult *result) {
     INIT_RESULT(result, "[slice_copy_test]");
 
     sprintf(test_data1, "This is a test");
-    Slice s1 = { 14, test_data1 };
-    Slice s2 = { 14, test_data2 };
+    Slice s1 = { test_data1, 14 };
+    Slice s2 = { test_data2, 14 };
 
     Result res = slice_copy(s2, s1);
     if (res.status != ERROR_OK) {

@@ -80,7 +80,7 @@ TestResult *heap_clone(TestResult *result) {
     INIT_RESULT(result, "[heap_clone]");
 
     Allocator* raw_heap = get_raw_heap_allocator();
-    Slice a = { 14, "This is a test" };
+    Slice a = { "This is a test", 14 };
 
     Result res = CLONE(raw_heap, a);
     if (res.status != ERROR_OK) {
