@@ -303,6 +303,47 @@ function Result array_list_pop(Linear *linear) {
     return res;
 }
 
+function Result array_list_iterator_next(Iterator *iter) {
+    Result res;
+    ArrayList *al;
+    BASE_ERROR_RESULT(res);
+
+    if (iter == 0) {
+        return res;
+    }
+
+    al = (ArrayList*)iter->iter;
+    if (iter->position >= al->item_count) {
+        return res;
+    }
+
+    res = INDEXING_GET(al, iter->position);
+    if (res.status != ERROR_OK) {
+        return res;
+    }
+    iter->position++;
+
+    return res;
+}
+
+function void array_list_iterator_reset(Iterator *iter) {
+    if (iter == 0) {
+        return;
+    }
+
+    iter->position = 0;
+    return;
+}
+
+function Iterator array_list_get_iterator(Indexing *indexing) {
+    Iterator iter = {
+        indexing, 0,
+        array_list_iterator_next,
+        array_list_iterator_reset
+    };
+    return iter;
+}
+
 Result new_array_list(ArrayList *al, Allocator* allocator, unsigned int item_size, unsigned int max_count) {
 	Result res, alloc_res;
 	BASE_ERROR_RESULT(res);
@@ -327,6 +368,7 @@ Result new_array_list(ArrayList *al, Allocator* allocator, unsigned int item_siz
 	al->outside_functions.insert = array_list_insert;
 	al->outside_functions.swap = array_list_swap;
 	al->outside_functions.replace = array_list_replace;
+	al->outside_functions.get_iterator = array_list_get_iterator;
 	al->outside_functions.linear_functions.push = array_list_push;
 	al->outside_functions.linear_functions.pop = array_list_pop;
 

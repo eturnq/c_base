@@ -79,6 +79,18 @@ Result new_queue_collection(QueueCollection*, Allocator*, unsigned int item_size
 Result deinit_queue_collection(QueueCollection*);
 
 typedef struct indexing_s Indexing;
+typedef struct iterator_s Iterator;
+
+struct iterator_s {
+    Indexing *iter;
+    unsigned int position;
+    Result (*next)(Iterator*);
+    void (*reset)(Iterator*);
+};
+
+#define ITER_NEXT(iterator) (((Iterator*)iterator)->next((Iterator*)iterator))
+#define ITER_RESET(iterator) (((Iterator*)iterator)->reset((Iterator*)iterator))
+
 struct indexing_s {
 	Linear linear_functions;
 	Result (*get)(Indexing*, int);
@@ -87,6 +99,7 @@ struct indexing_s {
 	Result (*insert)(Indexing*, Slice, int);
 	Result (*swap)(Indexing*, int, int);
 	Result (*replace)(Indexing*, Slice, int);
+	Iterator (*get_iterator)(Indexing*);
 };
 
 #define INDEXING_GET(collection, index) (((Indexing*)collection)->get((Indexing*)collection, index))
@@ -95,6 +108,7 @@ struct indexing_s {
 #define INDEXING_INSERT(collection, ptr, index) (((Indexing*)collection)->insert((Indexing*)collection, ptr, index))
 #define INDEXING_SWAP(collection, a, b) (((Indexing*)collection)->swap((Indexing*)collection, a, b))
 #define INDEXING_REPLACE(collection, ptr, index) (((Indexing*)collection)->replace((Indexing*)collection, ptr, index))
+#define INDEXING_ITER(collection) (((Indexing*)collection)->get_iterator((Indexing*)collection))
 
 typedef struct array_list_s ArrayList;
 struct array_list_s {

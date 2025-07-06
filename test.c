@@ -1,5 +1,6 @@
 #include "testing/test.h"
 #include "memory/heap_test.h"
+#include "memory/linear_alloc_test.h"
 #include "utilities/arraylist_test.h"
 #include "utilities/queue_test.h"
 #include "utilities/slice_test.h"
@@ -11,7 +12,7 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 21
+#define TEST_COUNT 23
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -34,6 +35,8 @@ Test tests[TEST_COUNT] = {
 	array_list_insert,
 	array_list_swap,
 	array_list_replace,
+	linear_alloc_init_deinit,
+	linear_alloc_alloc_free
 };
 
 int main() {
