@@ -6,3 +6,4 @@ core
 .zed
 build.ninja
 .ninja*
+__pycache__
