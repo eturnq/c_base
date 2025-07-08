@@ -27,7 +27,7 @@ int slice_cmp(Slice a, Slice b) {
 
 Slice slice_sub(Slice a, int offset, unsigned int length) {
 	unsigned int actual_offset;
-	static Slice b = { 0, 0 };
+	Slice b = { 0, 0 };
 
 	if (a.length == 0 || a.data == 0) {
 		return b;
@@ -48,7 +48,7 @@ Slice slice_sub(Slice a, int offset, unsigned int length) {
 	}
 
 	b.length = length;
-	b.data = ((uint8_t*)a.data) + actual_offset;
+	b.data = (void*)((uint8_t*)a.data + actual_offset);
 	return b;
 }
 

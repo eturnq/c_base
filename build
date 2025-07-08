@@ -4,7 +4,7 @@ from pathlib import Path
 import subprocess, sys
 
 global valid_actions
-valid_actions = ["build", "clean", "gen"]
+valid_actions = ["build", "clean", "gen", "debug"]
 
 global current_action
 current_action = "build"
@@ -13,7 +13,7 @@ global target_lib
 target_lib = "base.a"
 
 global cflags
-cflags = ""
+cflags = "-Wall -Wextra"
 
 global buildfile_path
 buildfile_path = "./build.ninja"
@@ -209,7 +209,7 @@ def identify_action():
 
 def call_build():
     print("Doing ninja build...")
-    subprocess.run("ninja")
+    subprocess.run(["ninja", "-f", buildfile_path])
 
 def call_clean():
     subprocess.run(["ninja", "-t", "clean"])
@@ -217,7 +217,11 @@ def call_clean():
 if __name__ == "__main__":
     identify_action()
 
-    if current_action == "build" or current_action == "gen":
+    if current_action == "build" or current_action == "debug" or current_action == "gen":
+        if current_action == "debug":
+            buildfile_path = "debug.ninja"
+            cflags += " -g"
+
         build_process = BuildProcess(Path(buildfile_path), default_rules, [], [], [])
         build_process.walk_for_sources()
 
@@ -225,7 +229,7 @@ if __name__ == "__main__":
             print("Writing new build.ninja...")
             build_process.write_out()
 
-        if current_action == "build":
+        if current_action == "build" or current_action == "debug":
             call_build()
     elif current_action == "clean":
         call_clean()

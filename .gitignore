@@ -4,6 +4,6 @@ test
 core
 *.core
 .zed
-build.ninja
+*.ninja
 .ninja*
 __pycache__
