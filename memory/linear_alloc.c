@@ -171,6 +171,22 @@ typedef struct {
 	LinearBlock *available;
 } LinearAllocator;
 
+function Result linear_allocation_from_block(LinearBlock *self, unsigned int size) {
+	Result res;
+	BASE_ERROR_RESULT(res);
+
+	if (self->mem.length >= size) {
+		res.data.length = size;
+		res.data.data = self->mem.data;
+		res.status = ERROR_OK;
+
+		self->mem.data = (void*)((uint8_t *)self->mem.data + size);
+		self->mem.length -= size;
+	}
+
+	return res;
+}
+
 function Result linear_alloc(Allocator *allocator, unsigned int size) {
 	Result res;
 	LinearAllocator *self;
@@ -182,20 +198,13 @@ function Result linear_alloc(Allocator *allocator, unsigned int size) {
 
 	self = (LinearAllocator*) allocator;
 	LinearBlock *current = self->available;
-	while (current->next != 0) {
+	while (current != 0) {
 		if (current->mem.length >= size) {
-			res.data.length = size;
-			res.data.data = current->mem.data;
-			res.status = ERROR_OK;
-
-			current->mem.data = (void*)((uint8_t*)current->mem.data + size);
-			current->mem.length -= size;
-
-			return res;
+			return linear_allocation_from_block(current, size);
 		}
 		current = current->next;
 	}
-
+	
 	return res;
 }
 
@@ -223,7 +232,7 @@ function Result linear_free(Allocator *allocator, Slice ptr) {
 	LinearBlock *current = self->available;
 	current_min = (uint8_t *) current->mem.data;
 	current_max = current_min + current->mem.length;
-	while (current->next != 0) {
+	while (current != 0) {
 		if (current_min == ptr_max) {
 			// ptr is to the left of current
 			current->mem.data = ptr.data;
@@ -269,15 +278,14 @@ function Result linear_free(Allocator *allocator, Slice ptr) {
 		current = current->next;
 	}
 
-	if (ptr_min < (uint8_t *) current->next->mem.data) {
-		new_block->next = current->next;
+	if (ptr_min > (uint8_t *) current->mem.data) {
+		new_block->next = 0;
 		current->next = new_block;
 		res.status = ERROR_OK;
 		return res;
 	}
 
-	current->next->next = new_block;
-	res.status = ERROR_OK;
+	BASE_ERROR_RESULT(res);
 	return res;
 }
 
@@ -301,6 +309,7 @@ function Result linear_freeall(Allocator *allocator) {
 Result init_linear_allocator(Allocator* allocator, unsigned int max_size) {
     Result res;
 		LinearAllocator *self;
+		unsigned int buffer_size;
     BASE_ERROR_RESULT(res);
 
     if (allocator == 0 || max_size == 0) {
@@ -321,14 +330,15 @@ Result init_linear_allocator(Allocator* allocator, unsigned int max_size) {
 		self->inside_methods = allocator;
 
 		// Get the buffer
-		res = ALLOC(allocator, max_size + sizeof(LinearBlock));
+		buffer_size = max_size + sizeof(LinearBlock); 
+		res = ALLOC(allocator, buffer_size);
 		if (res.status != ERROR_OK) {
 			res.data.data = self;
 			res.data.length = sizeof(LinearAllocator);
 			FREE(allocator, res.data);
 			return res;
 		}
-		if (res.data.length != max_size) {
+		if (res.data.length != buffer_size) {
 			FREE(allocator, res.data);
 			res.data.data = self;
 			res.data.length = sizeof(LinearAllocator);
@@ -350,6 +360,7 @@ Result init_linear_allocator(Allocator* allocator, unsigned int max_size) {
 		self->outside_methods.freeall = linear_freeall;
 		self->outside_methods.clone = standard_clone;
 
+		// Linear allocator created successfully.
 		res.status = ERROR_OK;
 		res.data.length = sizeof(LinearAllocator);
 		res.data.data = (void*)self;
