@@ -18,6 +18,8 @@ struct allocator_s {
 #define FREEALL(allocator) (((Allocator*)allocator)->freeall(allocator))
 #define CLONE(allocator, ptr) (((Allocator*)allocator)->clone(allocator, ptr))
 
+Result standard_realloc(Allocator *allocator, Slice ptr, unsigned int size);
+Result standard_clone(Allocator *allocator, Slice ptr);
 Allocator *get_raw_heap_allocator(void);
 
 struct heap_allocator_s;

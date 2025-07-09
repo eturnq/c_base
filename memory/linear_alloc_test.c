@@ -129,3 +129,49 @@ TestResult *basic_linear_alloc_clone(TestResult* result) {
     result->status = TEST_PASS;
     return result;
 }
+
+TestResult *linear_alloc_init_deinit(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	INIT_RESULT(result, "[linear_alloc_init_deinit] ");
+
+	heap = get_raw_heap_allocator();
+	res = init_linear_allocator(heap, 256);
+	if (res.status != ERROR_OK) {
+		MSG_PRINT(result, "Unable to instantiate linear allocator");
+		return result;
+	}
+
+	linear = (Allocator *) res.data.data;
+	res = deinit_linear_allocator(linear);
+	if (res.status != ERROR_OK) {
+		MSG_PRINT(result, "Unable to deinit linear allocator. POSSIBLE MEMORY LEAK!");
+		return result;
+	}
+
+	result->status = TEST_PASS;
+	return result;
+}
+
+TestResult *linear_alloc_alloc_free(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	Slice s;
+	INIT_RESULT(result, "[linear_alloc_alloc_free] ");
+
+	// TODO: finish this test
+	return result;
+}
+
+TestResult *linear_alloc_freeall(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	Slice s;
+	INIT_RESULT(result, "[linear_alloc_freeall] ");
+
+	// TODO: finish this test
+	return result;
+}

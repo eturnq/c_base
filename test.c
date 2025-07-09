@@ -12,7 +12,7 @@ TestResult *always_passes(TestResult* result) {
 	return result;
 }
 
-#define TEST_COUNT 25
+#define TEST_COUNT 28
 Test tests[TEST_COUNT] = {
 	always_passes,
 	slice_compare,
@@ -39,6 +39,9 @@ Test tests[TEST_COUNT] = {
 	basic_linear_alloc_alloc_free,
 	basic_linear_alloc_freeall,
 	basic_linear_alloc_clone,
+	linear_alloc_init_deinit,
+	linear_alloc_alloc_free,
+	linear_alloc_freeall,
 };
 
 int main() {
