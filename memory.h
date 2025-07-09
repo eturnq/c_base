@@ -28,5 +28,8 @@ typedef struct basic_linear_alloc_s BasicLinearAllocator;
 Result new_basic_linear_allocator(Allocator*, unsigned int max_size);
 Result deinit_basic_linear_allocator(BasicLinearAllocator*);
 
+Result init_linear_allocator(Allocator*, unsigned int max_size);
+Result deinit_linear_allocator(Allocator*);
+
 #include "memory/heap.h"
 #include "memory/linear_alloc.h"

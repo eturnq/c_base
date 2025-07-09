@@ -155,3 +155,27 @@ Result deinit_basic_linear_allocator(BasicLinearAllocator* linear) {
     res.status = ERROR_OK;
     return res;
 }
+
+Result init_linear_allocator(Allocator* allocator, unsigned int max_size) {
+    Result res;
+    BASE_ERROR_RESULT(res);
+
+    if (allocator == 0 || max_size == 0) {
+        return res;
+    }
+
+    // TODO: finish this function
+    return res;
+}
+
+Result deinit_linear_allocator(Allocator* self) {
+    Result res;
+    BASE_ERROR_RESULT(res);
+
+    if (self == 0) {
+        return res;
+    }
+
+    // TODO: finish this function
+    return res;
+}
