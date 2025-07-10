@@ -1,10 +1,10 @@
-#include "queue.h"
+#include "../globals.h"
 #include "../memory.h"
 
 #include <stdint.h>
 #include <string.h>
 
-Result queue_push(Linear* linear, Slice item) {
+function Result queue_push(Linear* linear, Slice item) {
 	Result res;
 	BASE_ERROR_RESULT(res);
 
@@ -45,7 +45,7 @@ Result queue_push(Linear* linear, Slice item) {
 	return res;
 }
 
-Result queue_pop(Linear *linear) {
+function Result queue_pop(Linear *linear) {
 	Result res;
 	BASE_ERROR_RESULT(res);
 
@@ -71,6 +71,32 @@ Result queue_pop(Linear *linear) {
 	return res;
 }
 
+function Result queue_clone(Linear *linear) {
+    	QueueCollection *self;
+	Result res;
+	BASE_ERROR_RESULT(res); 
+
+	if (linear == 0) {
+		return res;
+	}
+
+	self = (QueueCollection *) linear;
+
+	res.data.data = self;
+	res.data.length = sizeof(QueueCollection);
+	res = CLONE(self->allocator, res.data);
+	if (res.status != ERROR_OK) {
+		return res;
+	}
+	if (res.data.length != sizeof(QueueCollection)) {
+		FREE(self->allocator, res.data);
+		BASE_ERROR_RESULT(res); 
+		return res;
+	}
+
+	return res;
+}
+
 Result new_queue_collection(QueueCollection* queue, Allocator* allocator, unsigned int item_size, unsigned int max_count) {
 	Result res;
 	BASE_ERROR_RESULT(res);
@@ -91,8 +117,9 @@ Result new_queue_collection(QueueCollection* queue, Allocator* allocator, unsign
 	}
 
 	queue->buffer = buffer_res.data;
-	queue->outside_functions.push = queue_push;
+	queue->outside_functions.clone = queue_clone;
 	queue->outside_functions.pop = queue_pop;
+	queue->outside_functions.push = queue_push;
 
 	res.status = ERROR_OK;
 	res.data.length = sizeof(QueueCollection);
