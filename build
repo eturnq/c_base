@@ -220,7 +220,7 @@ if __name__ == "__main__":
     if current_action == "build" or current_action == "debug" or current_action == "gen":
         if current_action == "debug":
             buildfile_path = "debug.ninja"
-            cflags += " -g"
+            cflags += " -g -DDEBUG_SET=1"
 
         build_process = BuildProcess(Path(buildfile_path), default_rules, [], [], [])
         build_process.walk_for_sources()
