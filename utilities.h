@@ -62,6 +62,7 @@ typedef struct linear_s Linear;
 struct linear_s {
 	Result (*push)(Linear*, Slice);
 	Result (*pop)(Linear*);
+	Result (*clone)(Linear *);
 };
 
 #define LINEAR_PUSH(collection, item) (((Linear*)collection)->push((Linear*)collection, item))

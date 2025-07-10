@@ -306,6 +306,32 @@ function Result array_list_pop(Linear *linear) {
     return res;
 }
 
+function Result array_list_clone(Linear *linear) {
+	Result res;
+	ArrayList *self;
+	BASE_ERROR_RESULT(res); 
+
+	if (linear == 0) {
+		return res;
+	}
+
+	self = (ArrayList *) linear;
+
+	res.data.data = self;
+	res.data.length = sizeof(ArrayList);
+	res = CLONE(self->allocator, res.data);
+	if (res.status != ERROR_OK) {
+		return res;
+	}
+	if (res.data.length != sizeof(ArrayList)) {
+		FREE(self->allocator, res.data);
+		BASE_ERROR_RESULT(res); 
+		return res;
+	}
+
+	return res;
+}
+
 function Result array_list_iterator_next(Iterator *iter) {
     Result res;
     ArrayList *al;
@@ -374,6 +400,7 @@ Result new_array_list(ArrayList *al, Allocator* allocator, unsigned int item_siz
 	al->outside_functions.get_iterator = array_list_get_iterator;
 	al->outside_functions.linear_functions.push = array_list_push;
 	al->outside_functions.linear_functions.pop = array_list_pop;
+	al->outside_functions.linear_functions.clone = array_list_clone;
 
 	res.status = ERROR_OK;
 	res.data.length = sizeof(ArrayList);

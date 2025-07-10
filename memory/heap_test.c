@@ -139,16 +139,9 @@ function Result check_word(TestResult *result, char *word, unsigned int index, A
 TestResult *heap_slice_split(TestResult *result) {
     	ArrayList *split;
     	Result res;
-    	Slice check;
 	INIT_RESULT(result, "[heap_slice_split] ");
 
 	Allocator* raw_heap = get_raw_heap_allocator();
-	/*res = init_linear_allocator(raw_heap, 4096);
-	if (res.status != ERROR_OK) {
-		MSG_PRINT(result, "Unable to create linear allocator");
-		return result;
-	}*/
-	//Allocator *linear = (Allocator *) res.data.data;
 	Slice a = { "This is a test", 14 };
 	Slice b = { " ", 1 };
 
