@@ -3,6 +3,13 @@
 
 int slice_cmp(Slice a, Slice b) {
 	unsigned int max_length;
+	#ifdef DEBUG_SET
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-variable"
+	char *a_str = (char *)a.data;
+	char *b_str = (char *)b.data;
+	#pragma GCC diagnostic pop
+	#endif
 
 	if (a.length == 0 || a.data == 0) {
 	    return -1;

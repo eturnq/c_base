@@ -124,6 +124,7 @@ Result new_basic_linear_allocator(Allocator* allocator, unsigned int max_size) {
     linear->outside_methods.free = basic_linear_free;
     linear->outside_methods.freeall = basic_linear_freeall;
     linear->outside_methods.clone = basic_linear_clone;
+    linear->outside_methods.slice_split = standard_slice_split;
 
     res.data.data = linear;
     res.data.length = sizeof(BasicLinearAllocator);
@@ -359,6 +360,7 @@ Result init_linear_allocator(Allocator* allocator, unsigned int max_size) {
 		self->outside_methods.realloc = standard_realloc;
 		self->outside_methods.freeall = linear_freeall;
 		self->outside_methods.clone = standard_clone;
+		self->outside_methods.slice_split = standard_slice_split;
 
 		// Linear allocator created successfully.
 		res.status = ERROR_OK;

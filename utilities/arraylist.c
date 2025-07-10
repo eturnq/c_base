@@ -252,6 +252,9 @@ function Result array_list_push(Linear *linear, Slice item) {
     Result res;
     ArrayList *al;
     unsigned int offset;
+    #ifdef DEBUG_SET
+    char *item_str = (char *) item.data;
+    #endif
     BASE_ERROR_RESULT(res);
 
     if (linear == 0 || item.data == 0) {
@@ -398,3 +401,27 @@ Result deinit_array_list(ArrayList* al) {
 	res.status = ERROR_OK;
 	return res;
 }
+
+Result deinit_array_list_items(ArrayList *al) {
+	Result res;
+	BASE_ERROR_RESULT(res); 
+
+	if (al == 0) {
+		return res;
+	}
+
+	for (unsigned int index = 0; index < al->item_count; index++) {
+		res = INDEXING_GET(al, index);
+		if (res.status != ERROR_OK) {
+			return res;
+		}
+		res = FREE(al->allocator, res.data);
+		if (res.status != ERROR_OK) {
+			return res;
+		}
+	}
+
+	res.status = ERROR_OK;
+	return res;
+}
+

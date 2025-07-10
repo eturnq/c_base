@@ -125,6 +125,7 @@ struct array_list_s {
 };
 Result new_array_list(ArrayList *, Allocator*, unsigned int item_size, unsigned int max_count);
 Result deinit_array_list(ArrayList*);
+Result deinit_array_list_items(ArrayList *);
 
 /*typedef struct hashmap8_s Hashmap8;
 #include "utilities/hash.h"
