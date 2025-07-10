@@ -129,3 +129,90 @@ TestResult *basic_linear_alloc_clone(TestResult* result) {
     result->status = TEST_PASS;
     return result;
 }
+
+TestResult *linear_alloc_init_deinit(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	INIT_RESULT(result, "[linear_alloc_init_deinit] ");
+
+	heap = get_raw_heap_allocator();
+	res = init_linear_allocator(heap, 256);
+	if (res.status != ERROR_OK) {
+		MSG_PRINT(result, "Unable to instantiate linear allocator");
+		return result;
+	}
+
+	linear = (Allocator *) res.data.data;
+	res = deinit_linear_allocator(linear);
+	if (res.status != ERROR_OK) {
+		MSG_PRINT(result, "Unable to deinit linear allocator. POSSIBLE MEMORY LEAK!");
+		return result;
+	}
+
+	result->status = TEST_PASS;
+	return result;
+}
+
+TestResult *linear_alloc_alloc_free(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	Slice s;
+	INIT_RESULT(result, "[linear_alloc_alloc_free] ");
+
+	heap = get_raw_heap_allocator();
+	res = init_linear_allocator(heap, 256);
+	linear = (Allocator *) res.data.data;
+
+	res = ALLOC(linear, 8);
+	if (res.status != ERROR_OK) {
+	    MSG_PRINT(result, "Unable to allocate bytes");
+	    deinit_linear_allocator(linear);
+	    return result;
+	}
+	if (res.data.length != 8) {
+	    sprintf(
+	        result->message + strlen(result->message),
+	        "Returned slice has incorrect length: %u should be %u",
+	        res.data.length, 8
+	    );
+      deinit_linear_allocator(linear);
+      return result;
+	}
+	s = res.data;
+
+	res = FREE(linear, s);
+	if (res.status != ERROR_OK) {
+	    MSG_PRINT(result, "Unable to free allocation");
+	    deinit_linear_allocator(linear);
+	    return result;
+	}
+
+	deinit_linear_allocator(linear);
+
+	result->status = TEST_PASS;
+	return result;
+}
+
+TestResult *linear_alloc_freeall(TestResult *result) {
+	Allocator *heap;
+	Allocator *linear;
+	Result res;
+	INIT_RESULT(result, "[linear_alloc_freeall] ");
+
+	heap = get_raw_heap_allocator();
+	linear = (Allocator *) init_linear_allocator(heap, 256).data.data;
+
+	ALLOC(linear, 8);
+	ALLOC(linear, 8);
+
+	res = FREEALL(linear);
+	if (res.status != ERROR_OK) {
+	    MSG_PRINT(result, "Unable to free all allocations");
+	    return result;
+	}
+
+	result->status = TEST_PASS;
+	return result;
+}

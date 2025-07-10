@@ -18,6 +18,8 @@ struct allocator_s {
 #define FREEALL(allocator) (((Allocator*)allocator)->freeall(allocator))
 #define CLONE(allocator, ptr) (((Allocator*)allocator)->clone(allocator, ptr))
 
+Result standard_realloc(Allocator *allocator, Slice ptr, unsigned int size);
+Result standard_clone(Allocator *allocator, Slice ptr);
 Allocator *get_raw_heap_allocator(void);
 
 struct heap_allocator_s;
@@ -27,6 +29,9 @@ struct basic_linear_alloc_s;
 typedef struct basic_linear_alloc_s BasicLinearAllocator;
 Result new_basic_linear_allocator(Allocator*, unsigned int max_size);
 Result deinit_basic_linear_allocator(BasicLinearAllocator*);
+
+Result init_linear_allocator(Allocator*, unsigned int max_size);
+Result deinit_linear_allocator(Allocator*);
 
 #include "memory/heap.h"
 #include "memory/linear_alloc.h"

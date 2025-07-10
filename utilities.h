@@ -11,6 +11,11 @@ typedef struct slice_s {
 } Slice;
 
 #define IS_NULL_SLICE(slice) (slice.length == 0 || slice.data == 0)
+
+#define SET_NULL_SLICE(slice)\
+slice.data = 0;\
+slice.length = 0
+
 #define STR_SLICE(str) { str, strlen(str) }
 #define STR(slice) ((char*)slice)
 
