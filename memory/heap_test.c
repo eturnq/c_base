@@ -120,6 +120,13 @@ function Result check_word(TestResult *result, char *word, unsigned int index, A
 		res.status = ERROR_ERR;
 		return res;
 	}
+	#ifdef DEBUG_SET
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-variable"
+	Slice index_item_slice = *(Slice *)res.data.data;
+	char *index_item_str = (char *) index_item_slice.data;
+	#pragma GCC diagnostic pop
+	#endif
 	if (slice_cmp(*(Slice *)res.data.data, check) != 0) {
 		sprintf(
     			result->message + strlen(result->message), 
@@ -187,20 +194,10 @@ TestResult *heap_slice_split(TestResult *result) {
 		return (TestResult *) res.data.data;
 	}
 
-	res = deinit_array_list_items(split);
-	if (res.status != ERROR_OK) {
-		MSG_PRINT(result, "Unable to deinit arraylist items");
-		deinit_array_list(split);
-		res.data.data = split;
-		res.data.length = sizeof(ArrayList);
-		FREE(raw_heap, res.data);
-		return result;
-	}
 	deinit_array_list(split);
 	res.data.data = split;
 	res.data.length = sizeof(ArrayList);
 	FREE(raw_heap, res.data);
-	//deinit_linear_allocator(linear);
 
 	result->status = TEST_PASS;
 	return result;
