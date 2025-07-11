@@ -48,7 +48,10 @@ Result standard_realloc(Allocator *allocator, Slice ptr, unsigned int size) {
 function Result array_list_push_slice(ArrayList *al, Slice whole, unsigned int index, unsigned int last_offset) {
 	Result res;
 	#ifdef DEBUG_SET
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-but-set-variable"
 	char *to_add_str;
+	#pragma GCC diagnostic pop
     	#endif
 
 	BASE_ERROR_RESULT(res); 
@@ -93,8 +96,11 @@ Result standard_slice_split(Allocator *allocator, Slice whole, Slice part) {
 	ArrayList *parts;
 	Slice check;
 	#ifdef DEBUG_SET
+	#pragma GCC diagnostic push
+	#pragma GCC diagnostic ignored "-Wunused-variable"
 	char *whole_str = (char*) whole.data;
 	char *part_str = (char*) part.data;
+	#pragma GCC diagnostic pop
 	#endif
 	BASE_ERROR_RESULT(res); 
 
@@ -124,7 +130,10 @@ Result standard_slice_split(Allocator *allocator, Slice whole, Slice part) {
 	for (unsigned int index = 0; index < whole.length - part.length; index++) {
 		check.data = (void*) ((uint8_t *) whole.data) + index;
 		#ifdef DEBUG_SET
+		#pragma GCC diagnostic push
+		#pragma GCC diagnostic ignored "-Wunused-variable"
 		char *check_str = (char *) check.data;
+		#pragma GCC diagnostic pop
 		#endif
 		if (slice_cmp(check, part) == 0) {
     			res = array_list_push_slice(parts, whole, index, last_part_offset); 

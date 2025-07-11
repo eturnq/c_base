@@ -253,7 +253,10 @@ function Result array_list_push(Linear *linear, Slice item) {
     ArrayList *al;
     unsigned int offset;
     #ifdef DEBUG_SET
+    #pragma GCC diagnostic push
+    #pragma GCC diagnostic ignored "-Wunused-variable"
     char *item_str = (char *) item.data;
+    #pragma GCC diagnostic pop
     #endif
     BASE_ERROR_RESULT(res);
 
