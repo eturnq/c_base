@@ -279,6 +279,15 @@ function Result linear_free(Allocator *allocator, Slice ptr) {
 		current = current->next;
 	}
 
+	current_min = (uint8_t *) current->mem.data;
+	current_max = current_min + current->mem.length;
+	if (ptr_min < current_min) {
+		self->available = new_block;
+		new_block->next = current;
+		res.status = ERROR_OK;
+		return res;
+	}
+
 	if (ptr_min > (uint8_t *) current->mem.data) {
 		new_block->next = 0;
 		current->next = new_block;
