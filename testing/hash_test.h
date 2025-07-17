@@ -1,7 +1,7 @@
 #pragma once
 
-#include "../testing/test.h"
-#include "hash.h"
+#include "test.h"
+#include "../utilities/hash.h"
 
 TestResult *hashmap_open_init_deinit(TestResult *);
 TestResult *hashmap_open_add_get(TestResult *);

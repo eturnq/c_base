@@ -1,10 +1,10 @@
-#include "testing/test.h"
-#include "memory/heap_test.h"
-#include "memory/linear_alloc_test.h"
-#include "utilities/arraylist_test.h"
-#include "utilities/queue_test.h"
-#include "utilities/slice_test.h"
-#include "utilities/stack_test.h"
+#include "test.h"
+#include "heap_test.h"
+#include "linear_alloc_test.h"
+#include "arraylist_test.h"
+#include "queue_test.h"
+#include "slice_test.h"
+#include "stack_test.h"
 
 TestResult *always_passes(TestResult* result) {
 	INIT_RESULT(result, "[always_passes]");

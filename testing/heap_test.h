@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../testing/test.h"
+#include "test.h"
 
 TestResult *heap_allocation(TestResult *result);
 TestResult *heap_reallocation(TestResult *result);

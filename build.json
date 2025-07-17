@@ -1,0 +1,17 @@
+{
+    "name": "c_base.a",
+    "modules": [
+	{ "name": "testing", "local": {} }
+    ],
+    "rules": {
+	"cc": {
+		"command": "cc -c -o $out $in $cflags"
+	},
+	"link": {
+		"command": "ar rcs $out $objs && cc -o test -L. -l:$out -Ltesting -l:testing.a"
+	},
+	"module": {
+		"command": "cd $in && ../build"
+	}
+    }
+}

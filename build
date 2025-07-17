@@ -1,235 +1,156 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S python3 -W ignore::SyntaxWarning
 
+from json import loads as json_load
 from pathlib import Path
-import subprocess, sys
 
-global valid_actions
-valid_actions = ["build", "clean", "gen", "debug"]
+import subprocess
+import sys
 
-global current_action
+buildfile_path = "build.ninja"
 current_action = "build"
+valid_actions = ["build", "clean", "debug"]
 
-global target_lib
-target_lib = "base.a"
+cflags = "cflags = -Wall -Wextra"
 
-global cflags
-cflags = "-Wall -Wextra"
 
-global buildfile_path
-buildfile_path = "./build.ninja"
+def check_for_dependencies():
+    required_exe = ["cc", "git", "ninja"]
 
-class BuildRule:
-    def __init__(self, name : str, definitions : dict):
-        self.name = name
-        self.definitions = definitions
+    for exe in required_exe:
+        out = subprocess.run(["which", exe], capture_output=True)
+        if out.returncode != 0:
+            raise Exception(f"Missing dependency '{exe}'")
 
-    def render(self):
-        return "\n".join([f"rule {self.name}"] + [f"  {name} = {line}" for (name, line) in self.definitions.items()])
+    if not Path(".git").is_dir():
+        out = subprocess.run(["git", "init"])
+        if out.returncode != 0:
+            raise Exception("Failed to initialize git repository!")
 
-global default_rules
-default_rules = [
-    BuildRule("cc", {
-        "command": "cc -c -o $out $in {cflags}"
-    }),
-    BuildRule("linklib", {
-        "command": "ar rcs $out $in"
-    }),
-    BuildRule("linktest", {
-        "command": "cc -o test test.c -L. -l:{target_lib}"
-    })
-]
 
-class BuildTarget:
-    def __init__(self, target_def, build_rule, dependencies, definitions : dict):
-        self.targets = target_def.split()
-        self.build_rule = build_rule
-        self.dependencies = dependencies
-        self.definitions = definitions
+def git_module_update(module):
+    name, repo = (module["name"], module["git"]["remote"])
+    git_cmd = ["git", "submodule"]
 
-    def render(self):
-        first_line = f"build {' '.join(self.targets)}: {self.build_rule} {self.dependencies}"
-        definitions = ["  {name} = {definition}" for (name, definition) in self.definitions.items()]
-        return "\n".join([first_line] + definitions)
+    if Path(name).is_dir():
+        args = git_cmd + ["update", "--remote", "--recursive", name]
+        msg = f"Unable to update '{name}'"
+    else:
+        args = git_cmd + ["add", repo, name]
+        msg = f"Unable to install '{name}'"
 
-class BuildReader:
-    def __init__(self, buildfile : Path):
-        if not buildfile.is_file():
-            raise FileNotFoundError("The build file does not exist")
+    out = subprocess.run(args)
+    if out.returncode != 0:
+        raise Exception(msg)
 
-        self.file = buildfile
-        self.build_file_parsed = False
-        self.state = "newdef"
-        self.rules = []
-        self.srcs = []
-        self.targets = []
 
-        self.current_object = None
-        self._reset_build_args()
-        self._reset_rule_args()
+def local_module_update(module):
+    name = module["name"]
+    out = subprocess.run(["../build"], cwd=name)
+    if out.returncode != 0:
+        raise Exception(f"Unable to build local module '{name}'")
 
-    def _reset_build_args(self):
-        self.build_target_list = []
-        self.build_rule = ""
-        self.build_dep_list = []
-        self.build_definitions = {}
 
-    def _reset_rule_args(self):
-        self.rule_name = ""
-        self.rule_definitions : dict = {}
+def render_build_rule(name, config):
+    return f"rule {name}\n  command = {config['command']}"
 
-    def parse_build_file(self):
-        if not self.build_file_parsed:
-            with open(self.file, "r") as f:
-                [self._do_state(line) for line in f.readlines()]
-            self.build_file_parsed = True
 
-    def get_build_process(self):
-        self.parse_build_file()
-        return BuildProcess(self.file, self.rules, self.srcs, [f"{x}.o" for x in self.srcs], self.targets)
+def src_in_dir(dir, exceptions=[], exception_depth=-1, max_depth=-1):
+    if max_depth == 0:
+        return []
 
-    def _do_state(self, line):
-        if line[0] == "\n":
-            return
-        first_word = line[:line.index(" ")]
-        if self.state == "newdef":
-            if self.current_object == "build":
-                self.targets.append(BuildTarget(self.build_rule, self.build_target_list, self.build_dep_list, self.build_definitions))
-                self.srcs += [dep for dep in self.build_dep_list if dep.endswith(".c")]
-                self.srcs = list(set(self.srcs))
-            elif self.current_object == "rule":
-                self.rules.append(BuildRule(self.rule_name, self.rule_definitions))
+    src = list(map(lambda x: str(x), dir.glob("*.c")))
+    for subdir in dir.iterdir():
+        if subdir.is_dir() and not (subdir.name in exceptions and exception_depth > 0):
+            [src.append(s) for s in src_in_dir(
+                subdir, exceptions, exception_depth - 1, max_depth - 1)]
+    return src
 
-            self._reset_build_args()
-            self._reset_rule_args()
-            self._determine_object(first_word)
 
-            line_split = [part.strip().split() for part in line.split(":")]
-            [before_colon, after_colon] = line_split if len(line_split) == 2 else [line_split[0], []]
+def read_buildfile_sources(path):
+    with open(path, "r") as file:
+        line = file.readline()
+        while line:
+            if line[:6] == "srcs =":
+                return line.split("=")[1].strip().split()
+            line = file.readline()
+    return []
 
-            if len(before_colon) < 2:
-                raise ValueError(f"Need more words before colon: {' '.join(before_colon)}")
 
-            if self.current_object == "build":
-                self.build_target_list = before_colon[1:]
-                self.build_rule = after_colon[0]
-                self.dep_list = after_colon[1:]
-            elif self.current_object == "rule":
-                self.rule_name = before_colon[1]
+def render_dependency(tgt, deps, rule):
+    dep = " ".join(deps)
+    return f"build {tgt}: {rule} {dep}"
 
-            self.state = "needline"
-            return
-        elif self.state == "needline":
-            whitespace = [" "]
-            self.state = "newdef"
-            if line[0] in whitespace:
-                line_split = [part.strip().split() for part in line.split("=")]
-                [def_name, definition] = line_split if len(line_split) == 2 else [line_split[0], []]
 
-                if self.current_object == "build":
-                    self.build_definitions[def_name[0]] = " ".join(definition)
-                elif self.current_object == "rule":
-                    self.rule_definitions[def_name[0]] = " ".join(definition)
+def refresh_build_file(config):
+    modules = config["modules"] if "modules" in config else []
 
-    def _determine_object(self, word: str):
-        valid = ["build", "rule"]
-        if word in valid:
-            self.current_object = word
-            return
+    c_src = src_in_dir(Path("."), [m["name"] for m in modules], 1)
 
-        valid_str = "' or '".join(("', '".join(valid[:-1]), valid[-1]))
-        raise ValueError(f"Invalid object type '{word}' must be '{valid_str}'")
+    objs = [f"{c}.o" for c in c_src]
+    lib_dirs = [m["name"] for m in modules]
+    lib_paths = [f"{a}/{a}.a" for a in lib_dirs]
+    ldflags = [f"-L{a} -l:{a}.a" for a in lib_dirs]
+    build_rules = [render_build_rule(n, c)
+                   for [n, c] in list(config["rules"].items())]
 
-class BuildProcess:
-    def __init__(self, buildfile : Path, rules : list[BuildRule], srcs : list[Path], objs : list[str], targets : list[str]):
-        self.file = buildfile
-        self.rules = rules
+    buildfile = Path(buildfile_path)
+    b_src = read_buildfile_sources(buildfile) if buildfile.is_file() else []
+    if len(c_src) == 0:
+        raise Exception("No source files found!")
 
-        self.current_srcs = srcs
-        self.build_objects = objs
-        self.targets = targets
+    if set(b_src) != set(c_src):
+        print("Refreshing build file...")
+        src_text = [" ".join(["srcs", "="] + [str(c) for c in c_src])]
+        obj_text = [" ".join(["objs", "="] + objs)]
+        ldflags = [" ".join(["ldflags", "="] + ldflags)]
+        dep_rules = [render_dependency(
+            f"{b}.o", [str(b)], "cc") for b in c_src]
+        mod_rules = [render_dependency(
+            lib, [lib.split("/")[0]], "module") for lib in lib_paths]
+        out_deps = [f"{c}.o" for c in c_src] + lib_paths
+        out_rule = [render_dependency(config["name"], out_deps, "link")]
 
-    def __eq__(self, other):
-        if self.file != other.file:
-            return False
+        with open(buildfile_path, "w+") as file:
+            lines = src_text + obj_text + \
+                [cflags] + ldflags + build_rules + \
+                dep_rules + mod_rules + out_rule
+            file.write("\n\n".join(lines) + "\n")
 
-        if set(self.rules) != set(other.rules):
-            return False
-
-        if set(self.current_srcs) != set(other.current_srcs):
-            return False
-
-        if set(self.build_objects) != set(other.build_objects):
-            return False
-
-        if set(self.targets) != set(other.targets):
-            return False
-
-        return True
-
-    def walk_for_sources(self):
-        prg_dirs = [x for x in Path(".").iterdir() if x.is_dir() and x.name != "c_base"]
-        self.current_srcs = [str(file) for dir in prg_dirs for file in list(dir.glob("*.c"))]
-        self.build_objects = [f"{src}.o" for src in self.current_srcs]
-
-        object_defs = [BuildTarget(f"{src}.o", "cc", src, {}) for src in self.current_srcs]
-        lib_defs = [BuildTarget(target_lib, "linklib", " ".join(self.build_objects), {})]
-        test_defs = [BuildTarget("test", "linktest", f"test.c {target_lib}", {})]
-        self.targets = object_defs + lib_defs + test_defs
-
-    def is_regen_needed(self):
-        if not self.file.is_file():
-            self.build_srcs = []
-            return True
-
-        other = BuildReader(self.file).get_build_process()
-        return self != other
-
-    def print(self):
-        print(self.render())
-
-    def write_out(self):
-        with open(self.file, "w") as f:
-            f.write(self.render())
-            f.write("\n")
-
-    def render(self):
-        items = [item for itemlist in [self.rules, self.targets] for item in itemlist]
-        rstr = "".join(["\n\n".join(item.render() for item in items)])
-        return rstr.format(cflags = cflags, target_lib = target_lib)
 
 def identify_action():
     if len(sys.argv) < 2:
         return
 
     if sys.argv[1] not in valid_actions:
-        raise Exception("Valid actions are {}, or {}".format(", ".join(valid_actions[:-1]), valid_actions[-1]))
+        raise Exception("Valid actions are {}, or {}".format(
+            ", ".join(valid_actions[:-1]), valid_actions[-1]))
 
     global current_action
     current_action = sys.argv[1]
 
-def call_build():
-    print("Doing ninja build...")
-    subprocess.run(["ninja", "-f", buildfile_path])
 
-def call_clean():
-    subprocess.run(["ninja", "-t", "clean"])
+def execute():
+    if current_action == "build" or current_action == "debug":
+        args = ["ninja", "-f", buildfile_path]
+    elif current_action == "clean":
+        args = ["ninja", "-t", "clean"]
+    subprocess.run(args)
+
 
 if __name__ == "__main__":
     identify_action()
+    check_for_dependencies()
 
-    if current_action == "build" or current_action == "debug" or current_action == "gen":
-        if current_action == "debug":
-            buildfile_path = "debug.ninja"
-            cflags += " -g -DDEBUG_SET=1"
+    with open("build.json", "r") as file:
+        config = json_load(file.read())
 
-        build_process = BuildProcess(Path(buildfile_path), default_rules, [], [], [])
-        build_process.walk_for_sources()
+    if "modules" in config:
+        [git_module_update(m) for m in config["modules"] if "git" in m]
+        [local_module_update(m) for m in config["modules"] if "local" in m]
 
-        if build_process.is_regen_needed() or current_action == "gen":
-            print("Writing new build.ninja...")
-            build_process.write_out()
+    if current_action == "debug":
+        cflags += " -DDEBUG_SET"
+        buildfile_path = "debug.ninja"
 
-        if current_action == "build" or current_action == "debug":
-            call_build()
-    elif current_action == "clean":
-        call_clean()
+    refresh_build_file(config)
+    execute()
