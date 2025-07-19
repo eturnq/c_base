@@ -1,0 +1,14 @@
+{
+    "name": "testing.a",
+    "rules": {
+	"cc": {
+		"command": "cc -c -o $out $in $cflgas"
+	},
+	"link": {
+    		"command": "ar rcs $out $in"
+	},
+	"module": {
+		"command": "echo no modules"
+	}
+    }
+}
