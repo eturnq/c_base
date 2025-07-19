@@ -1,4 +1,4 @@
-#!/usr/bin/env -S python3 -W ignore::SyntaxWarning
+#!/usr/bin/env python3
 
 from json import loads as json_load
 from pathlib import Path
@@ -6,11 +6,31 @@ from pathlib import Path
 import subprocess
 import sys
 
-buildfile_path = "build.ninja"
-current_action = "build"
-valid_actions = ["build", "clean", "debug"]
 
-cflags = "cflags = -Wall -Wextra"
+USAGE_MESSAGE = """
+Usage:  {exe} [command]
+        Commands:
+            build: Build the current project updating all submodules.
+            clean: Clean build artifacts.
+            debug: Build with debugging symbols.
+"""
+
+VALID_ACTIONS = ["build", "clean", "debug"]
+
+
+# =========================================================================== #
+# - Preparation functions --------------------------------------------------- #
+# =========================================================================== #
+def identify_action():
+    if len(sys.argv) < 2:
+        return "build"
+
+    if sys.argv[1] not in VALID_ACTIONS:
+        print(USAGE_MESSAGE.format(exe=sys.argv[0]))
+        raise Exception("Valid actions are {}, or {}".format(
+            ", ".join(VALID_ACTIONS[:-1]), VALID_ACTIONS[-1]))
+
+    return sys.argv[1]
 
 
 def check_for_dependencies():
@@ -50,18 +70,63 @@ def local_module_update(module):
         raise Exception(f"Unable to build local module '{name}'")
 
 
+# =========================================================================== #
+# - Ninja file builder functions -------------------------------------------- #
+# =========================================================================== #
+def refresh_ninja_file(config, buildfile_path, cflags):
+    modules = config["modules"] if "modules" in config else []
+
+    directory_srcs = get_sources_in_directory(
+        Path("."), [m["name"] for m in modules], 1)
+    if len(directory_srcs) == 0:
+        raise Exception("No source files found!")
+
+    objs = [f"{c}.o" for c in directory_srcs]
+    lib_dirs = [m["name"] for m in modules]
+    lib_paths = [f"{a}/{a}.a" for a in lib_dirs]
+    ldflags = [f"-L{a} -l:{a}.a" for a in lib_dirs]
+    build_rules = [render_build_rule(n, c)
+                   for [n, c] in list(config["rules"].items())]
+
+    buildfile = Path(buildfile_path)
+    buildfile_srcs = read_buildfile_sources(
+        buildfile) if buildfile.is_file() else []
+
+    if set(buildfile_srcs) != set(directory_srcs):
+        print("Refreshing build file...")
+        src_text = [" ".join(["srcs", "="] + [str(c) for c in directory_srcs])]
+        obj_text = [" ".join(["objs", "="] + objs)]
+        ldflags = [" ".join(["ldflags", "="] + ldflags)]
+        dep_rules = [render_dependency(
+            f"{b}.o", [str(b)], "cc") for b in directory_srcs]
+        mod_rules = [render_dependency(
+            lib, [lib.split("/")[0]], "module") for lib in lib_paths]
+        out_deps = [f"{c}.o" for c in directory_srcs] + lib_paths
+        out_rule = [render_dependency(config["name"], out_deps, "link")]
+
+        with open(buildfile_path, "w+") as file:
+            lines = src_text + obj_text + [cflags] + ldflags + build_rules + \
+                dep_rules + mod_rules + out_rule
+            file.write("\n\n".join(lines) + "\n")
+
+
 def render_build_rule(name, config):
-    return f"rule {name}\n  command = {config['command']}"
+    lines = [f"{key} = {val}" for [key, val] in config.items()]
+    return "\n  ".join([f"rule {name}"] + lines)
 
 
-def src_in_dir(dir, exceptions=[], exception_depth=-1, max_depth=-1):
+def render_dependency(tgt, deps, rule):
+    dep = " ".join(deps)
+    return f"build {tgt}: {rule} {dep}"
+
+
+def get_sources_in_directory(dir, exceptions=[], exception_depth=-1, max_depth=-1):
     if max_depth == 0:
         return []
-
-    src = list(map(lambda x: str(x), dir.glob("*.c")))
+    src = list(map(str, list(dir.glob("*.c")) + list(dir.glob("*.cpp"))))
     for subdir in dir.iterdir():
         if subdir.is_dir() and not (subdir.name in exceptions and exception_depth > 0):
-            [src.append(s) for s in src_in_dir(
+            [src.append(s) for s in get_sources_in_directory(
                 subdir, exceptions, exception_depth - 1, max_depth - 1)]
     return src
 
@@ -76,69 +141,20 @@ def read_buildfile_sources(path):
     return []
 
 
-def render_dependency(tgt, deps, rule):
-    dep = " ".join(deps)
-    return f"build {tgt}: {rule} {dep}"
-
-
-def refresh_build_file(config):
-    modules = config["modules"] if "modules" in config else []
-
-    c_src = src_in_dir(Path("."), [m["name"] for m in modules], 1)
-
-    objs = [f"{c}.o" for c in c_src]
-    lib_dirs = [m["name"] for m in modules]
-    lib_paths = [f"{a}/{a}.a" for a in lib_dirs]
-    ldflags = [f"-L{a} -l:{a}.a" for a in lib_dirs]
-    build_rules = [render_build_rule(n, c)
-                   for [n, c] in list(config["rules"].items())]
-
-    buildfile = Path(buildfile_path)
-    b_src = read_buildfile_sources(buildfile) if buildfile.is_file() else []
-    if len(c_src) == 0:
-        raise Exception("No source files found!")
-
-    if set(b_src) != set(c_src):
-        print("Refreshing build file...")
-        src_text = [" ".join(["srcs", "="] + [str(c) for c in c_src])]
-        obj_text = [" ".join(["objs", "="] + objs)]
-        ldflags = [" ".join(["ldflags", "="] + ldflags)]
-        dep_rules = [render_dependency(
-            f"{b}.o", [str(b)], "cc") for b in c_src]
-        mod_rules = [render_dependency(
-            lib, [lib.split("/")[0]], "module") for lib in lib_paths]
-        out_deps = [f"{c}.o" for c in c_src] + lib_paths
-        out_rule = [render_dependency(config["name"], out_deps, "link")]
-
-        with open(buildfile_path, "w+") as file:
-            lines = src_text + obj_text + \
-                [cflags] + ldflags + build_rules + \
-                dep_rules + mod_rules + out_rule
-            file.write("\n\n".join(lines) + "\n")
-
-
-def identify_action():
-    if len(sys.argv) < 2:
-        return
-
-    if sys.argv[1] not in valid_actions:
-        raise Exception("Valid actions are {}, or {}".format(
-            ", ".join(valid_actions[:-1]), valid_actions[-1]))
-
-    global current_action
-    current_action = sys.argv[1]
-
-
-def execute():
-    if current_action == "build" or current_action == "debug":
-        args = ["ninja", "-f", buildfile_path]
-    elif current_action == "clean":
-        args = ["ninja", "-t", "clean"]
-    subprocess.run(args)
-
-
+# =========================================================================== #
+# - Main -------------------------------------------------------------------- #
+# =========================================================================== #
 if __name__ == "__main__":
-    identify_action()
+    sys.tracebacklimit = 0
+
+    buildfile_path = "build.ninja"
+    cflags = "cflags = -Wall -Wextra"
+
+    current_action = identify_action()
+    if current_action == "debug":
+        cflags += " -DDEBUG_SET -g"
+        buildfile_path = "debug.ninja"
+
     check_for_dependencies()
 
     with open("build.json", "r") as file:
@@ -148,9 +164,10 @@ if __name__ == "__main__":
         [git_module_update(m) for m in config["modules"] if "git" in m]
         [local_module_update(m) for m in config["modules"] if "local" in m]
 
-    if current_action == "debug":
-        cflags += " -DDEBUG_SET"
-        buildfile_path = "debug.ninja"
+    refresh_ninja_file(config, buildfile_path, cflags)
 
-    refresh_build_file(config)
-    execute()
+    if current_action == "build" or current_action == "debug":
+        args = ["ninja", "-f", buildfile_path]
+    elif current_action == "clean":
+        args = ["ninja", "-t", "clean"]
+    subprocess.run(args)
